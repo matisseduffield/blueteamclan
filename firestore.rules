@@ -21,5 +21,20 @@ service cloud.firestore {
     match /events/{eventId} {
       allow write: if true;
     }
+    
+    // Allow write access to clash status (CWL, wars, raids)
+    match /clashStatus/{docId} {
+      allow write: if true;
+    }
+    
+    // Allow write access to universal events
+    match /universalEvents/{eventId} {
+      allow write: if true;
+    }
+    
+    // Allow write access to join requests
+    match /joinRequests/{requestId} {
+      allow write: if true;
+    }
   }
 }
