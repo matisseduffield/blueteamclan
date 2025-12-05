@@ -21,8 +21,7 @@ export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Members", href: "/members" },
   { label: "Events", href: "/events" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
+  { label: "Join", href: "/join" },
 ];
 
 export const ROLES = {

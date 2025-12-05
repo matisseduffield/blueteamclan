@@ -4,6 +4,13 @@ import { useMembers } from "@/lib/hooks/useDatabase";
 import Card from "@/components/common/Card";
 import { formatTrophies } from "@/lib/utils";
 
+const roleColors = {
+  leader: { bg: "bg-red-100", text: "text-red-800", badge: "bg-red-600" },
+  coleader: { bg: "bg-orange-100", text: "text-orange-800", badge: "bg-orange-600" },
+  elder: { bg: "bg-purple-100", text: "text-purple-800", badge: "bg-purple-600" },
+  member: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-600" },
+};
+
 export default function MembersPage() {
   const { members, loading, error } = useMembers();
 
@@ -15,63 +22,196 @@ export default function MembersPage() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold mb-8">Members</h1>
-        <p className="text-gray-500">Loading members...</p>
+      <div className="space-y-0">
+        <section className="bg-gradient-to-r from-blue-900 to-purple-900 text-white py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 className="text-5xl font-bold">Clan Members</h1>
+            <p className="text-blue-100 text-lg mt-2">Meet the {members.length} heroes of Blue Team</p>
+          </div>
+        </section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <p className="text-gray-500">Loading members...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold mb-8">Members</h1>
-        <p className="text-red-500">Error loading members: {error}</p>
+      <div className="space-y-0">
+        <section className="bg-gradient-to-r from-blue-900 to-purple-900 text-white py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 className="text-5xl font-bold">Clan Members</h1>
+          </div>
+        </section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <p className="text-red-500">Error loading members: {error}</p>
+        </div>
       </div>
     );
   }
 
+  // Group members by role
+  const groupedMembers = {
+    leader: sortedMembers.filter((m) => m.role === "leader"),
+    coleader: sortedMembers.filter((m) => m.role === "coleader"),
+    elder: sortedMembers.filter((m) => m.role === "elder"),
+    member: sortedMembers.filter((m) => m.role === "member"),
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-8">Clan Members</h1>
-
-      {members.length === 0 ? (
-        <p className="text-gray-500">No members yet. Check back soon!</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedMembers.map((member) => (
-            <Card key={member.id}>
-              <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold">{member.name}</h3>
-                    <p className="text-sm text-gray-500">{member.role}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {formatTrophies(member.trophies)}
-                    </div>
-                    <p className="text-xs text-gray-500">Trophies</p>
-                  </div>
-                </div>
-
-                {member.avatar && (
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg"></div>
-                )}
-
-                <p className="text-sm text-gray-600">
-                  Joined{" "}
-                  {new Date(member.joinDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            </Card>
-          ))}
+    <div className="space-y-0">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-blue-900 to-purple-900 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-2">
+            <h1 className="text-5xl font-bold">Clan Members</h1>
+            <p className="text-blue-100 text-lg">
+              Meet the {members.length} heroes of Blue Team
+            </p>
+          </div>
         </div>
-      )}
+      </section>
+
+      {/* Members Section */}
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          {/* Leaders */}
+          {groupedMembers.leader.length > 0 && (
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                <span className="w-2 h-2 bg-red-600 rounded-full mr-3"></span>
+                Leaders
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {groupedMembers.leader.map((member) => (
+                  <MemberCard key={member.id} member={member} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Co-Leaders */}
+          {groupedMembers.coleader.length > 0 && (
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                <span className="w-2 h-2 bg-orange-600 rounded-full mr-3"></span>
+                Co-Leaders
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {groupedMembers.coleader.map((member) => (
+                  <MemberCard key={member.id} member={member} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Elders */}
+          {groupedMembers.elder.length > 0 && (
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                <span className="w-2 h-2 bg-purple-600 rounded-full mr-3"></span>
+                Elders
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {groupedMembers.elder.map((member) => (
+                  <MemberCard key={member.id} member={member} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Regular Members */}
+          {groupedMembers.member.length > 0 && (
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+                Members ({groupedMembers.member.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {groupedMembers.member.map((member) => (
+                  <MemberCard key={member.id} member={member} compact />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
+  );
+}
+
+function MemberCard({ member, compact = false }: any) {
+  const role = member.role as keyof typeof roleColors;
+  const colors = roleColors[role] || roleColors.member;
+
+  if (compact) {
+    return (
+      <Card className="hover:shadow-lg transition-shadow h-full">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-900 line-clamp-2">{member.name}</h3>
+            </div>
+            <span className={`${colors.badge} text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap ml-2`}>
+              {member.role}
+            </span>
+          </div>
+          <div className="flex justify-between items-end">
+            <div>
+              <p className="text-2xl font-bold text-blue-600">{formatTrophies(member.trophies)}</p>
+              <p className="text-xs text-gray-500">Trophies</p>
+            </div>
+            {member.townHallLevel && (
+              <div className="text-right">
+                <p className="text-sm font-bold text-gray-700">TH {member.townHallLevel}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow h-full">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900">{member.name}</h3>
+            <p className="text-sm text-gray-600">{member.tag}</p>
+          </div>
+          <span className={`${colors.badge} text-white text-sm font-bold px-3 py-1 rounded`}>
+            {member.role}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+          <div>
+            <p className="text-sm text-gray-600">Trophies</p>
+            <p className="text-2xl font-bold text-blue-600">{formatTrophies(member.trophies)}</p>
+          </div>
+          {member.townHallLevel && (
+            <div>
+              <p className="text-sm text-gray-600">Town Hall</p>
+              <p className="text-2xl font-bold text-purple-600">{member.townHallLevel}</p>
+            </div>
+          )}
+        </div>
+
+        {member.donations > 0 || member.donationsReceived > 0 ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-gray-600">Donated</p>
+              <p className="font-semibold text-gray-900">{member.donations}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600">Received</p>
+              <p className="font-semibold text-gray-900">{member.donationsReceived}</p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </Card>
   );
 }
