@@ -1,0 +1,18 @@
+# Cloudflare Workers Configuration
+name = "blueteamclan"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[build]
+command = "npm run build"
+cwd = "./"
+watch_paths = ["src/**/*.ts", "public/**/*"]
+
+[env.production]
+name = "blueteamclan-prod"
+route = "blueteamclan.com/*"
+zone_id = "" # Add your Cloudflare Zone ID here
+
+[env.staging]
+name = "blueteamclan-staging"
+route = "staging.blueteamclan.com/*"

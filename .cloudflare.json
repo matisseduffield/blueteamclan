@@ -1,0 +1,17 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "framework": "next",
+  "production": {
+    "routes": [
+      {
+        "pattern": "^/api/.*$",
+        "destination": "/api"
+      },
+      {
+        "pattern": ".*",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
