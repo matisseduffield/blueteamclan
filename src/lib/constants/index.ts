@@ -22,7 +22,7 @@ export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Members", href: "/members" },
   { label: "Events", href: "/events" },
-  { label: "Join", href: "/join" },
+  { label: "Apply", href: "/join" },
 ];
 
 export const ROLES = {
