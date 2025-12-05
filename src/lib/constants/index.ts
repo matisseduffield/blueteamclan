@@ -1,7 +1,7 @@
 // Global constants and configuration
 
 export const SITE_CONFIG = {
-  name: "Blue Team Clan",
+  name: "Blue Team",
   description: "Level 20 Australian Clash of Clans Clan",
   domain: "blueteamclan.com",
   region: "Australia",
