@@ -205,7 +205,7 @@ function EventCard({ event, past = false }: any) {
   const eventTypeLabel = EVENT_TYPES[eventType as keyof typeof EVENT_TYPES];
 
   const eventDate = new Date(event.date);
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const isToday = eventDate.toDateString() === now.toDateString();
   const isThisWeek =
     eventDate.getTime() - now.getTime() < 7 * 24 * 60 * 60 * 1000 && eventDate > now;
