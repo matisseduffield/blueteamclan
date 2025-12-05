@@ -7,6 +7,12 @@ import { formatTrophies } from "@/lib/utils";
 export default function MembersPage() {
   const { members, loading, error } = useMembers();
 
+  // Sort members by role
+  const roleOrder = { leader: 0, coleader: 1, elder: 2, member: 3 };
+  const sortedMembers = [...members].sort(
+    (a, b) => (roleOrder[a.role as keyof typeof roleOrder] ?? 4) - (roleOrder[b.role as keyof typeof roleOrder] ?? 4)
+  );
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -33,7 +39,7 @@ export default function MembersPage() {
         <p className="text-gray-500">No members yet. Check back soon!</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {members.map((member) => (
+          {sortedMembers.map((member) => (
             <Card key={member.id}>
               <div className="space-y-3">
                 <div className="flex items-start justify-between">

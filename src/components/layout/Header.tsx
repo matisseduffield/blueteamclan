@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SITE_CONFIG, NAV_LINKS } from "@/lib/constants";
 
 export default function Header() {
@@ -7,9 +8,13 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
-              <span className="font-bold text-blue-900">BT</span>
-            </div>
+            <Image
+              src="/assets/images/logo-circular.png"
+              alt={SITE_CONFIG.name}
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
             <span className="font-bold text-xl">{SITE_CONFIG.name}</span>
           </Link>
 

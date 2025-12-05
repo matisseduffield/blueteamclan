@@ -19,12 +19,23 @@ export const metadata: Metadata = {
   title: SITE_CONFIG.name,
   description: SITE_CONFIG.description,
   metadataBase: new URL(`https://${SITE_CONFIG.domain}`),
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon-192x192.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: `https://${SITE_CONFIG.domain}`,
     title: SITE_CONFIG.name,
     description: SITE_CONFIG.description,
+    images: [
+      {
+        url: "/favicon-256x256.png",
+        width: 256,
+        height: 256,
+      },
+    ],
   },
 };
 
