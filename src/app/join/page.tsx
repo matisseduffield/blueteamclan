@@ -206,7 +206,7 @@ export default function JoinPage() {
                   className="w-full"
                   disabled={loading}
                 >
-                  {loading ? "Submitting..." : "Submit Application"}
+                  {loading ? "Submitting..." : "Apply"}
                 </Button>
 
                 <p className="text-sm text-gray-600 text-center">

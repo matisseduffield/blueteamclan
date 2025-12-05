@@ -51,7 +51,7 @@ export default function Home() {
                 size="lg" 
                 className="bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
               >
-                Request to Join
+                Apply
               </Button>
             </Link>
             <a href={SITE_CONFIG.social.discord} target="_blank" rel="noopener noreferrer">
