@@ -28,25 +28,33 @@ if (!COC_API_KEY) {
   process.exit(1);
 }
 
-// Universal Clash of Clans calendar events (fixed days of month)
+// Universal Clash of Clans calendar events (pattern-based)
 const CLASH_CALENDAR = {
-  // Clan Games: 15th to 22nd of each month (8 days)
+  // CWL: 1st of each month, 10 days total (2 sign-up, 1 prep, 7 war days)
+  cwl: {
+    startDay: 1,
+    durationDays: 10,
+    name: "Clan War Leagues",
+    description: "CWL sign-up (2d), prep (1d), 7 war days",
+  },
+  // Clan Games: 22nd to 28th each month
   clanGames: {
-    startDay: 15,
-    endDay: 22,
+    startDay: 22,
+    endDay: 28,
     name: "Clan Games",
     description: "Complete challenges to earn clan rewards",
   },
-  // Season End: First Sunday of the month (trophy reset)
+  // Season End / Gold Pass Payout: 1st of each month
   seasonEnd: {
-    name: "Season End",
-    description: "Trophy reset and rewards distributed",
+    day: 1,
+    name: "Season End / Gold Pass",
+    description: "New season begins; rewards and loot payout",
   },
-  // CWL typically: 1st-7th and 9th-15th (alternating weeks)
-  cwlWeeks: [
-    { start: 1, end: 7, name: "CWL Registration & War Week 1" },
-    { start: 9, end: 15, name: "CWL War Week 2" },
-  ],
+  // League Reset: last Monday of each month
+  leagueReset: {
+    name: "League Reset",
+    description: "All leagues reset; Legends reset to 5000 trophies",
+  },
 };
 
 async function fetchClanWarLeague() {
@@ -101,71 +109,116 @@ async function fetchClanCapitalRaid() {
   }
 }
 
-function getFirstSunday(year: number, month: number): Date {
-  const date = new Date(year, month, 1);
+function getLastMonday(year: number, month: number): Date {
+  const date = new Date(year, month + 1, 0); // last day of month
   const day = date.getDay();
-  date.setDate(date.getDate() + (day === 0 ? 0 : 7 - day));
-  date.setHours(8, 0, 0, 0); // Season ends at 8 AM UTC
+  const diff = (day >= 1 ? day - 1 : 6);
+  date.setDate(date.getDate() - diff);
+  date.setHours(8, 0, 0, 0);
   return date;
 }
 
 interface ClashEvent {
   id: string;
-  type: "clan_games" | "season_end" | "cwl" | "raid" | "war";
+  type: "clan_games" | "season_end" | "cwl" | "league_reset";
   startDate: Date;
   endDate?: Date;
   name: string;
   description: string;
   status: "active" | "upcoming" | "completed";
   daysRemaining?: number;
+  source?: "predicted_pattern" | "official" | "manual";
+}
+
+function nextDateForDay(year: number, month: number, day: number, hour = 8): Date {
+  return new Date(year, month, day, hour, 0, 0, 0);
+}
+
+function pickWindowOrNext(start: Date, end: Date, now: Date): { start: Date; end: Date; status: "active" | "upcoming" } {
+  if (now <= end && now >= start) {
+    return { start, end, status: "active" };
+  }
+  if (now < start) {
+    return { start, end, status: "upcoming" };
+  }
+  const nextStart = new Date(start);
+  nextStart.setMonth(nextStart.getMonth() + 1);
+  const nextEnd = new Date(end);
+  nextEnd.setMonth(nextEnd.getMonth() + 1);
+  return { start: nextStart, end: nextEnd, status: "upcoming" };
 }
 
 async function generateClashCalendarEvents(): Promise<ClashEvent[]> {
   const events: ClashEvent[] = [];
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const year = now.getFullYear();
+  const month = now.getMonth();
 
-  // Generate events for current month and next 3 months
-  for (let monthOffset = 0; monthOffset < 4; monthOffset++) {
-    const targetDate = new Date(now.getFullYear(), now.getMonth() + monthOffset);
-    const year = targetDate.getFullYear();
-    const month = targetDate.getMonth();
+  // CWL: starts 1st, lasts 10 days
+  const cwlStart = nextDateForDay(year, month, CLASH_CALENDAR.cwl.startDay, 0);
+  const cwlEnd = new Date(cwlStart.getTime() + CLASH_CALENDAR.cwl.durationDays * 24 * 60 * 60 * 1000);
+  const cwlWindow = pickWindowOrNext(cwlStart, cwlEnd, now);
+  events.push({
+    id: `cwl_${cwlWindow.start.getFullYear()}_${cwlWindow.start.getMonth()}`,
+    type: "cwl",
+    startDate: cwlWindow.start,
+    endDate: cwlWindow.end,
+    name: CLASH_CALENDAR.cwl.name,
+    description: CLASH_CALENDAR.cwl.description,
+    status: cwlWindow.status,
+    daysRemaining: cwlWindow.status === "upcoming" ? Math.ceil((cwlWindow.start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : undefined,
+    source: "predicted_pattern",
+  });
 
-    // Clan Games: 15th-22nd
-    const cgStart = new Date(year, month, CLASH_CALENDAR.clanGames.startDay, 8, 0, 0);
-    const cgEnd = new Date(year, month, CLASH_CALENDAR.clanGames.endDay, 8, 0, 0);
+  // Clan Games: 22-28
+  const cgStart = nextDateForDay(year, month, CLASH_CALENDAR.clanGames.startDay, 8);
+  const cgEnd = nextDateForDay(year, month, CLASH_CALENDAR.clanGames.endDay, 8);
+  const cgWindow = pickWindowOrNext(cgStart, cgEnd, now);
+  events.push({
+    id: `clan_games_${cgWindow.start.getFullYear()}_${cgWindow.start.getMonth()}`,
+    type: "clan_games",
+    startDate: cgWindow.start,
+    endDate: cgWindow.end,
+    name: CLASH_CALENDAR.clanGames.name,
+    description: CLASH_CALENDAR.clanGames.description,
+    status: cgWindow.status,
+    daysRemaining: cgWindow.status === "upcoming" ? Math.ceil((cgWindow.start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : undefined,
+    source: "predicted_pattern",
+  });
 
-    if (cgEnd > today) {
-      const status = now >= cgStart && now <= cgEnd ? "active" : cgEnd > now ? "upcoming" : "completed";
-      const daysUntil = Math.ceil((cgStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Season End / Gold Pass: 1st
+  const seasonStart = nextDateForDay(year, month, CLASH_CALENDAR.seasonEnd.day, 0);
+  const seasonEnd = new Date(seasonStart.getTime() + 24 * 60 * 60 * 1000);
+  const seasonWindow = pickWindowOrNext(seasonStart, seasonEnd, now);
+  events.push({
+    id: `season_end_${seasonWindow.start.getFullYear()}_${seasonWindow.start.getMonth()}`,
+    type: "season_end",
+    startDate: seasonWindow.start,
+    endDate: seasonWindow.end,
+    name: CLASH_CALENDAR.seasonEnd.name,
+    description: CLASH_CALENDAR.seasonEnd.description,
+    status: seasonWindow.status,
+    daysRemaining: seasonWindow.status === "upcoming" ? Math.ceil((seasonWindow.start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : undefined,
+    source: "predicted_pattern",
+  });
 
-      events.push({
-        id: `clan_games_${year}_${month}`,
-        type: "clan_games",
-        startDate: cgStart,
-        endDate: cgEnd,
-        name: "Clan Games",
-        description: `Complete challenges to earn clan rewards. ${cgEnd.toLocaleDateString()} - ${cgStart.toLocaleDateString()}`,
-        status: status as any,
-        daysRemaining: daysUntil > 0 ? daysUntil : undefined,
-      });
-    }
-
-    // Season End: First Sunday
-    const seasonEnd = getFirstSunday(year, month);
-    if (seasonEnd > today) {
-      const daysUntil = Math.ceil((seasonEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      events.push({
-        id: `season_end_${year}_${month}`,
-        type: "season_end",
-        startDate: seasonEnd,
-        name: "Season End - Trophy Reset",
-        description: `End of season trophy reset and rewards. Resets at ${seasonEnd.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} UTC`,
-        status: "upcoming",
-        daysRemaining: daysUntil,
-      });
-    }
-  }
+  // League Reset: last Monday
+  const lrThisMonth = getLastMonday(year, month);
+  const lrNextMonth = getLastMonday(year, month + 1);
+  const lrStart = now <= lrThisMonth ? lrThisMonth : lrNextMonth;
+  const lrEnd = new Date(lrStart.getTime() + 24 * 60 * 60 * 1000);
+  const lrStatus = now >= lrStart && now <= lrEnd ? "active" : "upcoming";
+  events.push({
+    id: `league_reset_${lrStart.getFullYear()}_${lrStart.getMonth()}`,
+    type: "league_reset",
+    startDate: lrStart,
+    endDate: lrEnd,
+    name: CLASH_CALENDAR.leagueReset.name,
+    description: CLASH_CALENDAR.leagueReset.description,
+    status: lrStatus,
+    daysRemaining: lrStatus === "upcoming" ? Math.ceil((lrStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : undefined,
+    source: "predicted_pattern",
+  });
 
   return events;
 }
@@ -291,11 +344,14 @@ async function syncClashCalendar() {
     // Save universal calendar events
     console.log("📅 Saving universal events...");
     for (const event of calendarEvents) {
-      await setDoc(doc(db, "universalEvents", event.id), {
+      const payload: any = {
         ...event,
         startDate: event.startDate.toISOString(),
         endDate: event.endDate?.toISOString() || null,
-      });
+        source: event.source || "predicted_pattern",
+      };
+      if (payload.daysRemaining === undefined) delete payload.daysRemaining;
+      await setDoc(doc(db, "universalEvents", event.id), payload);
     }
     console.log(`   ✅ Saved ${calendarEvents.length} universal events\n`);
 

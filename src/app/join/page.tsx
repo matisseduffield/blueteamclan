@@ -140,6 +140,11 @@ export default function JoinPage() {
       return;
     }
 
+    if (!db) {
+      setSubmitError("Application form is offline: Firebase is not configured.");
+      return;
+    }
+
     setLoading(true);
 
     try {

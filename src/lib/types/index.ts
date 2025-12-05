@@ -6,6 +6,7 @@ export interface ClanMember {
   role: "leader" | "coleader" | "elder" | "member";
   trophies: number;
   joinDate: Date;
+  tag?: string;
   avatar?: string;
 }
 

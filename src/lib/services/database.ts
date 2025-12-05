@@ -9,20 +9,24 @@ import {
   getDocs,
   query,
   where,
+  type Firestore,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ClanMember, Event } from "@/lib/types";
+import { firebaseReady } from "@/lib/firebase";
 
 // Initialize Firestore collections structure
 export async function initializeDatabase() {
   try {
+    if (!db || !firebaseReady) throw new Error("Firebase is not configured.");
+    const database = db as Firestore;
     // Check if collections exist, if not create them
-    const membersRef = collection(db, "members");
-    const eventsRef = collection(db, "events");
-    const clanRef = doc(db, "clan", "info");
+    const membersRef = collection(database, "members");
+    const eventsRef = collection(database, "events");
+    const clanRef = doc(database, "clan", "info");
 
     // Create clan info if it doesn't exist
-    const clanSnap = await getDocs(query(collection(db, "clan")));
+    const clanSnap = await getDocs(query(collection(database, "clan")));
     if (clanSnap.empty) {
       await setDoc(clanRef, {
         name: "Blue Team Clan",
@@ -46,10 +50,12 @@ export async function initializeDatabase() {
 // Seed sample member data
 export async function seedMembers(members: Omit<ClanMember, "id">[]) {
   try {
-    const batch = writeBatch(db);
+    if (!db || !firebaseReady) throw new Error("Firebase is not configured.");
+    const database = db as Firestore;
+    const batch = writeBatch(database);
 
     members.forEach((member) => {
-      const memberRef = doc(collection(db, "members"));
+      const memberRef = doc(collection(database, "members"));
       batch.set(memberRef, {
         ...member,
         joinDate: member.joinDate instanceof Date ? member.joinDate : new Date(member.joinDate),
@@ -67,10 +73,12 @@ export async function seedMembers(members: Omit<ClanMember, "id">[]) {
 // Seed sample event data
 export async function seedEvents(events: Omit<Event, "id">[]) {
   try {
-    const batch = writeBatch(db);
+    if (!db || !firebaseReady) throw new Error("Firebase is not configured.");
+    const database = db as Firestore;
+    const batch = writeBatch(database);
 
     events.forEach((event) => {
-      const eventRef = doc(collection(db, "events"));
+      const eventRef = doc(collection(database, "events"));
       batch.set(eventRef, {
         ...event,
         date: event.date instanceof Date ? event.date : new Date(event.date),
@@ -88,7 +96,9 @@ export async function seedEvents(events: Omit<Event, "id">[]) {
 // Get all members
 export async function getAllMembers(): Promise<ClanMember[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, "members"));
+    if (!db || !firebaseReady) throw new Error("Firebase is not configured.");
+    const database = db as Firestore;
+    const querySnapshot = await getDocs(collection(database, "members"));
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -102,7 +112,9 @@ export async function getAllMembers(): Promise<ClanMember[]> {
 // Get all events
 export async function getAllEvents(): Promise<Event[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, "events"));
+    if (!db || !firebaseReady) throw new Error("Firebase is not configured.");
+    const database = db as Firestore;
+    const querySnapshot = await getDocs(collection(database, "events"));
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -116,8 +128,10 @@ export async function getAllEvents(): Promise<Event[]> {
 // Get clan info
 export async function getClanInfo() {
   try {
-    const clanRef = doc(db, "clan", "info");
-    const docSnap = await getDocs(query(collection(db, "clan")));
+    if (!db || !firebaseReady) throw new Error("Firebase is not configured.");
+    const database = db as Firestore;
+    const clanRef = doc(database, "clan", "info");
+    const docSnap = await getDocs(query(collection(database, "clan")));
     if (docSnap.empty) {
       return null;
     }
