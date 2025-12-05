@@ -17,6 +17,46 @@ export default function EventsPage() {
   const { events, loading, error } = useEvents();
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(["war", "cwl", "challenge", "meeting", "other"]);
 
+  // Sort events by date
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA;
+    });
+  }, [events]);
+
+  const upcomingEvents = useMemo(() => {
+    return sortedEvents.filter(
+      (e) => new Date(e.date) > new Date() || e.status === "scheduled"
+    );
+  }, [sortedEvents]);
+
+  const pastEvents = useMemo(() => {
+    return sortedEvents.filter(
+      (e) => new Date(e.date) <= new Date() && e.status !== "scheduled"
+    );
+  }, [sortedEvents]);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const now = new Date();
+    const upcoming = upcomingEvents.length;
+    return {
+      upcomingCount: upcoming,
+      totalCount: events.length,
+    };
+  }, [upcomingEvents, events]);
+
+  // Filter events by type
+  const filteredUpcomingEvents = useMemo(() => {
+    return upcomingEvents.filter((e) => selectedEventTypes.includes(e.type));
+  }, [upcomingEvents, selectedEventTypes]);
+
+  const filteredPastEvents = useMemo(() => {
+    return pastEvents.filter((e) => selectedEventTypes.includes(e.type));
+  }, [pastEvents, selectedEventTypes]);
+
   if (loading) {
     return (
       <div className="space-y-0">
@@ -47,39 +87,6 @@ export default function EventsPage() {
       </div>
     );
   }
-
-  // Sort events by date
-  const sortedEvents = [...events].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return dateB - dateA;
-  });
-
-  const upcomingEvents = sortedEvents.filter(
-    (e) => new Date(e.date) > new Date() || e.status === "scheduled"
-  );
-  const pastEvents = sortedEvents.filter(
-    (e) => new Date(e.date) <= new Date() && e.status !== "scheduled"
-  );
-
-  // Calculate statistics
-  const stats = useMemo(() => {
-    const now = new Date();
-    const upcoming = upcomingEvents.length;
-    return {
-      upcomingCount: upcoming,
-      totalCount: events.length,
-    };
-  }, [upcomingEvents, events]);
-
-  // Filter events by type
-  const filteredUpcomingEvents = useMemo(() => {
-    return upcomingEvents.filter((e) => selectedEventTypes.includes(e.type));
-  }, [upcomingEvents, selectedEventTypes]);
-
-  const filteredPastEvents = useMemo(() => {
-    return pastEvents.filter((e) => selectedEventTypes.includes(e.type));
-  }, [pastEvents, selectedEventTypes]);
 
   const toggleEventType = (type: string) => {
     setSelectedEventTypes((prev) =>
