@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useMembers } from "@/lib/hooks/useDatabase";
 import Card from "@/components/common/Card";
 import { formatTrophies } from "@/lib/utils";
@@ -11,14 +12,60 @@ const roleColors = {
   member: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-600" },
 };
 
+const roleDescriptions = {
+  leader: "The visionary leader steering Blue Team to victory",
+  coleader: "Trusted strategists who help lead the clan",
+  elder: "Experienced players mentoring our members",
+  member: "Active members climbing the trophy ranks",
+};
+
 export default function MembersPage() {
   const { members, loading, error } = useMembers();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(["leader", "coleader", "elder", "member"]);
 
   // Sort members by role
   const roleOrder = { leader: 0, coleader: 1, elder: 2, member: 3 };
   const sortedMembers = [...members].sort(
     (a, b) => (roleOrder[a.role as keyof typeof roleOrder] ?? 4) - (roleOrder[b.role as keyof typeof roleOrder] ?? 4)
   );
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const totalTrophies = members.reduce((sum, m) => sum + m.trophies, 0);
+    return {
+      totalMembers: members.length,
+      totalTrophies,
+      averageTrophies: members.length > 0 ? Math.round(totalTrophies / members.length) : 0,
+    };
+  }, [members]);
+
+  // Filter members
+  const filteredMembers = useMemo(() => {
+    return sortedMembers.filter((member) => {
+      const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = selectedRoles.includes(member.role);
+      return matchesSearch && matchesRole;
+    });
+  }, [sortedMembers, searchQuery, selectedRoles]);
+
+  // Group filtered members by role
+  const groupedMembers = useMemo(() => {
+    return {
+      leader: filteredMembers.filter((m) => m.role === "leader"),
+      coleader: filteredMembers.filter((m) => m.role === "coleader"),
+      elder: filteredMembers.filter((m) => m.role === "elder"),
+      member: filteredMembers.filter((m) => m.role === "member"),
+    };
+  }, [filteredMembers]);
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role)
+        ? prev.filter((r) => r !== role)
+        : [...prev, role]
+    );
+  };
 
   if (loading) {
     return (
@@ -51,14 +98,6 @@ export default function MembersPage() {
     );
   }
 
-  // Group members by role
-  const groupedMembers = {
-    leader: sortedMembers.filter((m) => m.role === "leader"),
-    coleader: sortedMembers.filter((m) => m.role === "coleader"),
-    elder: sortedMembers.filter((m) => m.role === "elder"),
-    member: sortedMembers.filter((m) => m.role === "member"),
-  };
-
   return (
     <div className="space-y-0 min-h-screen bg-gradient-to-b from-black to-blue-950">
       {/* Hero Section */}
@@ -73,16 +112,80 @@ export default function MembersPage() {
         </div>
       </section>
 
+      {/* Statistics Section */}
+      <section className="py-12 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-white/10 backdrop-blur-md border border-white/20">
+              <div className="text-center space-y-2">
+                <p className="text-white/60 text-sm">Total Members</p>
+                <p className="text-4xl font-bold text-blue-400">{stats.totalMembers}</p>
+              </div>
+            </Card>
+            <Card className="bg-white/10 backdrop-blur-md border border-white/20">
+              <div className="text-center space-y-2">
+                <p className="text-white/60 text-sm">Total Trophies</p>
+                <p className="text-4xl font-bold text-yellow-400">{formatTrophies(stats.totalTrophies)}</p>
+              </div>
+            </Card>
+            <Card className="bg-white/10 backdrop-blur-md border border-white/20">
+              <div className="text-center space-y-2">
+                <p className="text-white/60 text-sm">Average Trophies</p>
+                <p className="text-4xl font-bold text-purple-400">{formatTrophies(stats.averageTrophies)}</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Filters Section */}
+      <section className="py-12 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-semibold text-white mb-3">Search Members</label>
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Role Filters */}
+          <div>
+            <label className="block text-sm font-semibold text-white mb-3">Filter by Role</label>
+            <div className="flex flex-wrap gap-3">
+              {(["leader", "coleader", "elder", "member"] as const).map((role) => (
+                <button
+                  key={role}
+                  onClick={() => toggleRole(role)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    selectedRoles.includes(role)
+                      ? "bg-blue-600 text-white border border-blue-400"
+                      : "bg-white/10 text-white/60 border border-white/20 hover:bg-white/20"
+                  }`}
+                >
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Members Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           {/* Leaders */}
           {groupedMembers.leader.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+              <h2 className="text-3xl font-bold text-white mb-2 flex items-center">
                 <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
-                Leaders
+                Leaders <span className="text-lg font-normal text-white/60 ml-2">({groupedMembers.leader.length})</span>
               </h2>
+              <p className="text-white/60 text-sm mb-6">{roleDescriptions.leader}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groupedMembers.leader.map((member) => (
                   <MemberCard key={member.id} member={member} />
@@ -94,10 +197,11 @@ export default function MembersPage() {
           {/* Co-Leaders */}
           {groupedMembers.coleader.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+              <h2 className="text-3xl font-bold text-white mb-2 flex items-center">
                 <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                Co-Leaders
+                Co-Leaders <span className="text-lg font-normal text-white/60 ml-2">({groupedMembers.coleader.length})</span>
               </h2>
+              <p className="text-white/60 text-sm mb-6">{roleDescriptions.coleader}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {groupedMembers.coleader.map((member) => (
                   <MemberCard key={member.id} member={member} />
@@ -109,10 +213,11 @@ export default function MembersPage() {
           {/* Elders */}
           {groupedMembers.elder.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+              <h2 className="text-3xl font-bold text-white mb-2 flex items-center">
                 <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                Elders
+                Elders <span className="text-lg font-normal text-white/60 ml-2">({groupedMembers.elder.length})</span>
               </h2>
+              <p className="text-white/60 text-sm mb-6">{roleDescriptions.elder}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {groupedMembers.elder.map((member) => (
                   <MemberCard key={member.id} member={member} />
@@ -124,15 +229,23 @@ export default function MembersPage() {
           {/* Regular Members */}
           {groupedMembers.member.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+              <h2 className="text-3xl font-bold text-white mb-2 flex items-center">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                Members ({groupedMembers.member.length})
+                Members <span className="text-lg font-normal text-white/60 ml-2">({groupedMembers.member.length})</span>
               </h2>
+              <p className="text-white/60 text-sm mb-6">{roleDescriptions.member}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 {groupedMembers.member.map((member) => (
                   <MemberCard key={member.id} member={member} compact />
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* No results */}
+          {filteredMembers.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-xl text-white/50">No members match your filters.</p>
             </div>
           )}
         </div>

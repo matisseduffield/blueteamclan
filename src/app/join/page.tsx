@@ -1,13 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+interface FormData {
+  playerTag: string;
+  playerName: string;
+  email: string;
+  age: string;
+  experience: string;
+  why: string;
+}
+
+interface FormErrors {
+  playerTag?: string;
+  playerName?: string;
+  email?: string;
+  age?: string;
+  why?: string;
+}
+
+const validatePlayerTag = (tag: string): string | undefined => {
+  if (!tag.trim()) return "Player tag is required";
+  if (!/^#[A-Z0-9]{3,}$/.test(tag)) return "Player tag must start with # and contain letters/numbers (e.g., #CQRGLC)";
+  return undefined;
+};
+
+const validatePlayerName = (name: string): string | undefined => {
+  if (!name.trim()) return "Player name is required";
+  if (name.trim().length < 2) return "Player name must be at least 2 characters";
+  return undefined;
+};
+
+const validateEmail = (email: string): string | undefined => {
+  if (!email.trim()) return "Email is required";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Please enter a valid email address";
+  return undefined;
+};
+
+const validateAge = (age: string): string | undefined => {
+  if (age && (parseInt(age) < 13 || parseInt(age) > 120)) {
+    return "Age must be between 13 and 120";
+  }
+  return undefined;
+};
+
+const validateWhy = (why: string): string | undefined => {
+  if (why && why.trim().length < 10) return "Please tell us more (at least 10 characters)";
+  return undefined;
+};
+
 export default function JoinPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     playerTag: "",
     playerName: "",
     email: "",
@@ -15,28 +62,87 @@ export default function JoinPage() {
     experience: "",
     why: "",
   });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touchedFields, setTouchedFields] = useState<Set<keyof FormData>>(new Set());
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Validate all fields
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    const tagError = validatePlayerTag(formData.playerTag);
+    if (tagError) newErrors.playerTag = tagError;
+    
+    const nameError = validatePlayerName(formData.playerName);
+    if (nameError) newErrors.playerName = nameError;
+    
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Real-time validation
+  const validateField = (field: keyof FormData, value: string): string | undefined => {
+    switch (field) {
+      case "playerTag":
+        return validatePlayerTag(value);
+      case "playerName":
+        return validatePlayerName(value);
+      case "email":
+        return validateEmail(value);
+      case "age":
+        return validateAge(value);
+      case "why":
+        return validateWhy(value);
+      default:
+        return undefined;
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const field = name as keyof FormData;
+    
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setTouchedFields((prev) => new Set(prev).add(field));
+    
+    // Real-time validation
+    const error = validateField(field, value);
+    setErrors((prev) => {
+      if (error) {
+        return { ...prev, [field]: error };
+      } else {
+        const { [field]: _, ...rest } = prev as Record<string, any>;
+        return rest as FormErrors;
+      }
+    });
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name } = e.target;
+    const field = name as keyof FormData;
+    setTouchedFields((prev) => new Set(prev).add(field));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setSubmitError("");
+    
+    if (!validateForm()) {
+      setSubmitError("Please fix the errors above");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Validate form
-      if (!formData.playerTag || !formData.playerName || !formData.email) {
-        throw new Error("Please fill in all required fields");
-      }
-
       // Add to Firestore
       await addDoc(collection(db, "joinRequests"), {
         playerTag: formData.playerTag,
@@ -58,11 +164,14 @@ export default function JoinPage() {
         experience: "",
         why: "",
       });
+      setTouchedFields(new Set());
+      setErrors({});
+      setCurrentStep(1);
 
       // Reset after 5 seconds
       setTimeout(() => setSubmitted(false), 5000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit request");
+      setSubmitError(err instanceof Error ? err.message : "Failed to submit request");
     } finally {
       setLoading(false);
     }
@@ -101,117 +210,253 @@ export default function JoinPage() {
             </Card>
           ) : (
             <Card className="bg-white/10 backdrop-blur-md border border-white/20">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white">
-                    Player Tag <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="playerTag"
-                    value={formData.playerTag}
-                    onChange={handleChange}
-                    placeholder="#XXXX"
-                    className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <p className="text-sm text-white/50">Your Clash of Clans player tag (e.g., #CQRGLC)</p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white">
-                    In-Game Name <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="playerName"
-                    value={formData.playerName}
-                    onChange={handleChange}
-                    placeholder="Your in-game name"
-                    className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white">
-                    Email <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="your@email.com"
-                    className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white">
-                    Age
-                  </label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleChange}
-                    placeholder="Optional"
-                    className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white">
-                    Clash Experience
-                  </label>
-                  <select
-                    name="experience"
-                    value={formData.experience}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select your experience level</option>
-                    <option value="beginner">Beginner (New to clans)</option>
-                    <option value="intermediate">Intermediate (1-2 years)</option>
-                    <option value="advanced">Advanced (2+ years)</option>
-                    <option value="expert">Expert (Competitive player)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white">
-                    Why do you want to join Blue Team?
-                  </label>
-                  <textarea
-                    name="why"
-                    value={formData.why}
-                    onChange={handleChange}
-                    placeholder="Tell us about yourself and why you'd be a great addition to our clan..."
-                    rows={4}
-                    className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  />
-                </div>
-
-                {error && (
-                  <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg">
-                    {error}
+              {/* Progress Indicator */}
+              <div className="mb-8 pb-8 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                    currentStep === 1 ? "bg-blue-600 text-white" : "bg-white/20 text-white/60"
+                  }`}>
+                    1
                   </div>
-                )}
-
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  disabled={loading}
-                >
-                  {loading ? "Submitting..." : "Apply"}
-                </Button>
-
-                <p className="text-sm text-white/60 text-center">
-                  We'll review your application and contact you within 48 hours via the email provided.
+                  <div className="h-1 flex-1 bg-white/10"></div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                    currentStep === 2 ? "bg-blue-600 text-white" : "bg-white/20 text-white/60"
+                  }`}>
+                    2
+                  </div>
+                </div>
+                <p className="text-sm text-white/60 mt-3">
+                  {currentStep === 1 ? "Basic Information" : "Experience & Details"}
                 </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {currentStep === 1 ? (
+                  <>
+                    {/* Player Tag */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-white">
+                        Player Tag <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="playerTag"
+                          value={formData.playerTag}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="#XXXX"
+                          className={`w-full px-4 py-3 border bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                            errors.playerTag && touchedFields.has("playerTag")
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-white/20 focus:ring-blue-500"
+                          }`}
+                        />
+                        {errors.playerTag && touchedFields.has("playerTag") && (
+                          <span className="absolute right-3 top-3 text-red-400 text-xl">⚠️</span>
+                        )}
+                      </div>
+                      {errors.playerTag && touchedFields.has("playerTag") && (
+                        <p className="text-red-400 text-sm flex items-center gap-2">
+                          <span>✗</span> {errors.playerTag}
+                        </p>
+                      )}
+                      <p className="text-sm text-white/50">Your Clash of Clans player tag (e.g., #CQRGLC)</p>
+                    </div>
+
+                    {/* Player Name */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-white">
+                        In-Game Name <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="playerName"
+                          value={formData.playerName}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Your in-game name"
+                          className={`w-full px-4 py-3 border bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                            errors.playerName && touchedFields.has("playerName")
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-white/20 focus:ring-blue-500"
+                          }`}
+                        />
+                        {errors.playerName && touchedFields.has("playerName") && (
+                          <span className="absolute right-3 top-3 text-red-400 text-xl">⚠️</span>
+                        )}
+                      </div>
+                      {errors.playerName && touchedFields.has("playerName") && (
+                        <p className="text-red-400 text-sm flex items-center gap-2">
+                          <span>✗</span> {errors.playerName}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-white">
+                        Email <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="your@email.com"
+                          className={`w-full px-4 py-3 border bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                            errors.email && touchedFields.has("email")
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-white/20 focus:ring-blue-500"
+                          }`}
+                        />
+                        {errors.email && touchedFields.has("email") && (
+                          <span className="absolute right-3 top-3 text-red-400 text-xl">⚠️</span>
+                        )}
+                      </div>
+                      {errors.email && touchedFields.has("email") && (
+                        <p className="text-red-400 text-sm flex items-center gap-2">
+                          <span>✗</span> {errors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-full"
+                        onClick={() => setCurrentStep(2)}
+                        disabled={!!errors.playerTag || !!errors.playerName || !!errors.email}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Age */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-white">
+                        Age
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="age"
+                          value={formData.age}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Optional"
+                          className={`w-full px-4 py-3 border bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                            errors.age && touchedFields.has("age")
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-white/20 focus:ring-blue-500"
+                          }`}
+                        />
+                        {errors.age && touchedFields.has("age") && (
+                          <span className="absolute right-3 top-3 text-red-400 text-xl">⚠️</span>
+                        )}
+                      </div>
+                      {errors.age && touchedFields.has("age") && (
+                        <p className="text-red-400 text-sm flex items-center gap-2">
+                          <span>✗</span> {errors.age}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Experience */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-white">
+                        Clash Experience
+                      </label>
+                      <select
+                        name="experience"
+                        value={formData.experience}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-white/20 bg-white/5 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select your experience level</option>
+                        <option value="beginner">Beginner (New to clans)</option>
+                        <option value="intermediate">Intermediate (1-2 years)</option>
+                        <option value="advanced">Advanced (2+ years)</option>
+                        <option value="expert">Expert (Competitive player)</option>
+                      </select>
+                    </div>
+
+                    {/* Why Join */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-white">
+                        Why do you want to join Blue Team?
+                      </label>
+                      <div className="relative">
+                        <textarea
+                          name="why"
+                          value={formData.why}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Tell us about yourself and why you'd be a great addition to our clan..."
+                          rows={4}
+                          className={`w-full px-4 py-3 border bg-white/5 text-white placeholder-white/40 rounded-lg focus:outline-none focus:ring-2 transition-all resize-none ${
+                            errors.why && touchedFields.has("why")
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-white/20 focus:ring-blue-500"
+                          }`}
+                        />
+                        {errors.why && touchedFields.has("why") && (
+                          <span className="absolute right-3 top-3 text-red-400 text-xl">⚠️</span>
+                        )}
+                      </div>
+                      {errors.why && touchedFields.has("why") && (
+                        <p className="text-red-400 text-sm flex items-center gap-2">
+                          <span>✗</span> {errors.why}
+                        </p>
+                      )}
+                    </div>
+
+                    {submitError && (
+                      <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg flex items-start gap-3">
+                        <span className="text-xl">❌</span>
+                        <span>{submitError}</span>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        className="flex-1"
+                        onClick={() => setCurrentStep(1)}
+                        disabled={loading}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="flex-1"
+                        disabled={loading}
+                        onClick={handleSubmit}
+                      >
+                        {loading ? (
+                          <span className="flex items-center gap-2">
+                            <span className="inline-block animate-spin">⏳</span>
+                            Submitting...
+                          </span>
+                        ) : (
+                          "Apply"
+                        )}
+                      </Button>
+                    </div>
+
+                    <p className="text-sm text-white/60 text-center">
+                      We'll review your application and contact you within 48 hours via the email provided.
+                    </p>
+                  </>
+                )}
               </form>
             </Card>
           )}
