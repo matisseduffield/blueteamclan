@@ -11,6 +11,12 @@ export const SITE_CONFIG = {
   },
 };
 
+// Firebase Project Info
+export const FIREBASE_PROJECT = {
+  projectId: "theblueteamclan",
+  projectName: "The Blue Team Clan",
+};
+
 export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Members", href: "/members" },
