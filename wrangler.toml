@@ -1,5 +1,0 @@
-# Cloudflare Pages Configuration for Next.js
-# This configuration is for Pages deployments
-# Pages will use the build settings from the UI, not this file
-
-pages_build_output_dir = ".next/public"
