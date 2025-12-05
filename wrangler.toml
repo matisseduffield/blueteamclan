@@ -1,18 +1,5 @@
-# Cloudflare Workers Configuration
-name = "blueteamclan"
-main = "src/index.ts"
-compatibility_date = "2024-12-01"
+# Cloudflare Pages Configuration for Next.js
+# This configuration is for Pages deployments
+# Pages will use the build settings from the UI, not this file
 
-[build]
-command = "npm run build"
-cwd = "./"
-watch_paths = ["src/**/*.ts", "public/**/*"]
-
-[env.production]
-name = "blueteamclan-prod"
-route = "blueteamclan.com/*"
-zone_id = "" # Add your Cloudflare Zone ID here
-
-[env.staging]
-name = "blueteamclan-staging"
-route = "staging.blueteamclan.com/*"
+pages_build_output_dir = ".next/public"
