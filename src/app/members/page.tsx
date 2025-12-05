@@ -60,13 +60,13 @@ export default function MembersPage() {
   };
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 min-h-screen bg-gradient-to-b from-black to-blue-950">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-900 to-purple-900 text-white py-20">
+      <section className="bg-gradient-to-b from-blue-900/50 to-purple-900/50 text-white py-20 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-2">
             <h1 className="text-5xl font-bold">Clan Members</h1>
-            <p className="text-blue-100 text-lg">
+            <p className="text-blue-200 text-lg">
               Meet the {members.length} heroes of Blue Team
             </p>
           </div>
@@ -74,13 +74,13 @@ export default function MembersPage() {
       </section>
 
       {/* Members Section */}
-      <section className="bg-gray-50 py-16">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           {/* Leaders */}
           {groupedMembers.leader.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-                <span className="w-2 h-2 bg-red-600 rounded-full mr-3"></span>
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+                <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
                 Leaders
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,8 +94,8 @@ export default function MembersPage() {
           {/* Co-Leaders */}
           {groupedMembers.coleader.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-                <span className="w-2 h-2 bg-orange-600 rounded-full mr-3"></span>
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+                <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
                 Co-Leaders
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -109,8 +109,8 @@ export default function MembersPage() {
           {/* Elders */}
           {groupedMembers.elder.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-                <span className="w-2 h-2 bg-purple-600 rounded-full mr-3"></span>
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+                <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
                 Elders
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -124,8 +124,8 @@ export default function MembersPage() {
           {/* Regular Members */}
           {groupedMembers.member.length > 0 && (
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
                 Members ({groupedMembers.member.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -147,11 +147,11 @@ function MemberCard({ member, compact = false }: any) {
 
   if (compact) {
     return (
-      <Card className="hover:shadow-lg transition-shadow h-full">
+      <Card className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 hover:border-white/40 transition-all hover:shadow-lg h-full">
         <div className="space-y-3">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="font-bold text-gray-900 line-clamp-2">{member.name}</h3>
+              <h3 className="font-bold text-white line-clamp-2">{member.name}</h3>
             </div>
             <span className={`${colors.badge} text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap ml-2`}>
               {member.role}
@@ -159,12 +159,12 @@ function MemberCard({ member, compact = false }: any) {
           </div>
           <div className="flex justify-between items-end">
             <div>
-              <p className="text-2xl font-bold text-blue-600">{formatTrophies(member.trophies)}</p>
-              <p className="text-xs text-gray-500">Trophies</p>
+              <p className="text-2xl font-bold text-blue-400">{formatTrophies(member.trophies)}</p>
+              <p className="text-xs text-white/50">Trophies</p>
             </div>
             {member.townHallLevel && (
               <div className="text-right">
-                <p className="text-sm font-bold text-gray-700">TH {member.townHallLevel}</p>
+                <p className="text-sm font-bold text-purple-300">TH {member.townHallLevel}</p>
               </div>
             )}
           </div>
@@ -174,27 +174,27 @@ function MemberCard({ member, compact = false }: any) {
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow h-full">
+    <Card className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 hover:border-white/40 transition-all hover:shadow-lg h-full">
       <div className="space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900">{member.name}</h3>
-            <p className="text-sm text-gray-600">{member.tag}</p>
+            <h3 className="text-lg font-bold text-white">{member.name}</h3>
+            <p className="text-sm text-white/60">{member.tag}</p>
           </div>
           <span className={`${colors.badge} text-white text-sm font-bold px-3 py-1 rounded`}>
             {member.role}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
           <div>
-            <p className="text-sm text-gray-600">Trophies</p>
-            <p className="text-2xl font-bold text-blue-600">{formatTrophies(member.trophies)}</p>
+            <p className="text-sm text-white/60">Trophies</p>
+            <p className="text-2xl font-bold text-blue-400">{formatTrophies(member.trophies)}</p>
           </div>
           {member.townHallLevel && (
             <div>
-              <p className="text-sm text-gray-600">Town Hall</p>
-              <p className="text-2xl font-bold text-purple-600">{member.townHallLevel}</p>
+              <p className="text-sm text-white/60">Town Hall</p>
+              <p className="text-2xl font-bold text-purple-400">{member.townHallLevel}</p>
             </div>
           )}
         </div>
@@ -202,12 +202,12 @@ function MemberCard({ member, compact = false }: any) {
         {member.donations > 0 || member.donationsReceived > 0 ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-gray-600">Donated</p>
-              <p className="font-semibold text-gray-900">{member.donations}</p>
+              <p className="text-xs text-white/60">Donated</p>
+              <p className="font-semibold text-white">{member.donations}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Received</p>
-              <p className="font-semibold text-gray-900">{member.donationsReceived}</p>
+              <p className="text-xs text-white/60">Received</p>
+              <p className="font-semibold text-white">{member.donationsReceived}</p>
             </div>
           </div>
         ) : null}

@@ -61,13 +61,13 @@ export default function EventsPage() {
   );
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 min-h-screen bg-gradient-to-b from-black to-blue-950">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-900 to-purple-900 text-white py-20">
+      <section className="bg-gradient-to-b from-blue-900/50 to-purple-900/50 text-white py-20 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-2">
             <h1 className="text-5xl font-bold">Clan Events</h1>
-            <p className="text-blue-100 text-lg">
+            <p className="text-blue-200 text-lg">
               Wars, challenges, and community events
             </p>
           </div>
@@ -75,18 +75,18 @@ export default function EventsPage() {
       </section>
 
       {/* Events Section */}
-      <section className="bg-gray-50 py-16">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {events.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-xl text-gray-500">No events scheduled yet.</p>
+              <p className="text-xl text-white/50">No events scheduled yet.</p>
             </div>
           ) : (
             <div className="space-y-16">
               {/* Upcoming Events */}
               {upcomingEvents.length > 0 && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-8 flex items-center text-gray-900">
+                  <h2 className="text-3xl font-bold mb-8 flex items-center text-white">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-3 animate-pulse"></span>
                     Upcoming Events
                   </h2>
@@ -101,8 +101,8 @@ export default function EventsPage() {
               {/* Past Events */}
               {pastEvents.length > 0 && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-8 flex items-center text-gray-700">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full mr-3"></span>
+                  <h2 className="text-3xl font-bold mb-8 flex items-center text-white/80">
+                    <span className="w-2 h-2 bg-white/40 rounded-full mr-3"></span>
                     Past Events
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -133,8 +133,8 @@ function EventCard({ event, past = false }: any) {
 
   return (
     <Card
-      className={`hover:shadow-xl transition-all h-full ${
-        past ? "opacity-75" : "hover:scale-105"
+      className={`bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 hover:border-white/40 transition-all h-full hover:shadow-lg ${
+        past ? "opacity-50" : ""
       }`}
     >
       <div className="space-y-4">
@@ -143,8 +143,8 @@ function EventCard({ event, past = false }: any) {
             <div className="flex items-start gap-3">
               <span className="text-3xl">{emoji}</span>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-                <p className="text-sm text-gray-600 font-medium">{eventTypeLabel}</p>
+                <h3 className="text-xl font-bold text-white">{event.title}</h3>
+                <p className="text-sm text-blue-200 font-medium">{eventTypeLabel}</p>
               </div>
             </div>
           </div>
@@ -171,12 +171,12 @@ function EventCard({ event, past = false }: any) {
           </div>
         </div>
 
-        <p className="text-gray-700 leading-relaxed">{event.description}</p>
+        <p className="text-white/80 leading-relaxed">{event.description}</p>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between pt-4 border-t border-white/10">
           <div>
-            <p className="text-xs text-gray-600">Scheduled</p>
-            <p className="font-semibold text-gray-900">
+            <p className="text-xs text-white/60">Scheduled</p>
+            <p className="font-semibold text-white">
               {eventDate.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -185,8 +185,8 @@ function EventCard({ event, past = false }: any) {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-600">Time</p>
-            <p className="font-semibold text-gray-900">
+            <p className="text-xs text-white/60">Time</p>
+            <p className="font-semibold text-white">
               {eventDate.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
