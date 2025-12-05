@@ -1,8 +1,8 @@
 // Custom React hook for Firebase database operations
 import { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
-import { db } from "./firebase";
-import type { ClanMember, Event } from "./types";
+import { db } from "@/lib/firebase";
+import type { ClanMember, Event } from "@/lib/types";
 
 export function useMembers() {
   const [members, setMembers] = useState<ClanMember[]>([]);
