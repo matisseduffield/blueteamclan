@@ -2,8 +2,9 @@
 
 export const SITE_CONFIG = {
   name: "Blue Team Clan",
-  description: "Official website for Blue Team Clan - Clash of Clans",
+  description: "Level 20 Australian Clash of Clans Clan",
   domain: "blueteamclan.com",
+  region: "Australia",
   social: {
     discord: "https://discord.gg/blueteamclan",
     twitter: "https://twitter.com/blueteamclan",

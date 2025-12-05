@@ -1,222 +1,143 @@
 import Button from "@/components/common/Button";
-import Card from "@/components/common/Card";
 import Link from "next/link";
 import Image from "next/image";
 import { SITE_CONFIG } from "@/lib/constants";
 
 export default function Home() {
   return (
-    <div className="space-y-0">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-400 rounded-full blur-3xl"></div>
-        </div>
+    <div className="space-y-0 overflow-hidden">
+      {/* Hero Section - Minimalist & Modern */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-black opacity-80"></div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-40 relative z-10">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                  {SITE_CONFIG.name}
-                </h1>
-                <p className="text-2xl text-blue-100 font-semibold">
-                  Level 20 Clash of Clans Clan
-                </p>
-              </div>
-              
-              <p className="text-xl text-blue-100 max-w-lg">
-                Join our competitive clan community. 114 war wins and counting. Play with the best, grow with us.
-              </p>
-              
-              <div className="flex gap-4 flex-wrap pt-4">
-                <Link href="/join">
-                  <Button variant="primary" size="lg" className="bg-white text-blue-900 hover:bg-blue-50">
-                    Request to Join
-                  </Button>
-                </Link>
-                <a href={SITE_CONFIG.social.discord} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="lg">
-                    Join Our Discord
-                  </Button>
-                </a>
-              </div>
+        {/* Animated shapes in background */}
+        <div className="absolute top-20 right-10 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-1/2 right-1/3 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-4000"></div>
 
-              <div className="grid grid-cols-3 gap-4 pt-8 border-t border-blue-700">
-                <div>
-                  <p className="text-3xl font-bold">39</p>
-                  <p className="text-blue-200">Members</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">114</p>
-                  <p className="text-blue-200">War Wins</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">20</p>
-                  <p className="text-blue-200">Level</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden md:flex justify-center items-center">
-              <div className="relative w-80 h-80">
-                <Image
-                  src="/assets/images/logo-circular.png"
-                  alt={SITE_CONFIG.name}
-                  width={300}
-                  height={300}
-                  className="w-full h-full object-cover rounded-3xl shadow-2xl"
-                />
-              </div>
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <div className="relative w-32 h-32 group">
+              <Image
+                src="/assets/images/logo-circular.png"
+                alt={SITE_CONFIG.name}
+                width={128}
+                height={128}
+                className="w-full h-full object-cover rounded-full shadow-2xl group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Why Join Blue Team?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We're more than just a clan. We're a community committed to excellence.
+          {/* Main Content */}
+          <div className="space-y-6">
+            <h1 className="text-6xl md:text-7xl font-bold text-white leading-tight tracking-tight">
+              {SITE_CONFIG.name}
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-blue-200 font-light max-w-2xl mx-auto">
+              Level 20 Clash of Clans Clan • 114 War Wins • Based in {SITE_CONFIG.region}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="hover:shadow-xl transition-shadow">
-              <div className="space-y-4 h-full">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl">
-                  ⚔️
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">Competitive Wars</h3>
-                <p className="text-gray-600 text-lg">
-                  Participate in strategic clan wars, CWL, and challenges. Learn from the best.
-                </p>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-xl transition-shadow">
-              <div className="space-y-4 h-full">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-3xl">
-                  👥
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">Active Community</h3>
-                <p className="text-gray-600 text-lg">
-                  Connect with friendly players on Discord. Share strategies and grow together.
-                </p>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-xl transition-shadow">
-              <div className="space-y-4 h-full">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white text-3xl">
-                  🎯
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">Organized</h3>
-                <p className="text-gray-600 text-lg">
-                  Clear rules, skilled leadership, and fair promotions. We're structured for success.
-                </p>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="bg-gradient-to-r from-blue-900 to-purple-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <p className="text-4xl md:text-5xl font-bold">39</p>
-              <p className="text-blue-200 text-lg mt-2">Active Members</p>
-            </div>
-            <div>
-              <p className="text-4xl md:text-5xl font-bold">114</p>
-              <p className="text-blue-200 text-lg mt-2">War Wins</p>
-            </div>
-            <div>
-              <p className="text-4xl md:text-5xl font-bold">20</p>
-              <p className="text-blue-200 text-lg mt-2">Clan Level</p>
-            </div>
-            <div>
-              <p className="text-4xl md:text-5xl font-bold">🌏</p>
-              <p className="text-blue-200 text-lg mt-2">Global</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Links Section */}
-      <section className="bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Explore Our Clan
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link href="/members" className="group">
-              <Card className="h-full hover:shadow-xl transition-all hover:scale-105">
-                <div className="space-y-4">
-                  <div className="text-5xl">👥</div>
-                  <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600">View Members</h3>
-                  <p className="text-gray-600">
-                    Meet our 39 members. See their stats, roles, and trophies.
-                  </p>
-                </div>
-              </Card>
-            </Link>
-
-            <Link href="/events" className="group">
-              <Card className="h-full hover:shadow-xl transition-all hover:scale-105">
-                <div className="space-y-4">
-                  <div className="text-5xl">📅</div>
-                  <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600">Upcoming Events</h3>
-                  <p className="text-gray-600">
-                    Check our war schedule and clan events. Stay updated.
-                  </p>
-                </div>
-              </Card>
-            </Link>
-
-            <Link href="/join" className="group">
-              <Card className="h-full hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-br from-blue-50 to-purple-50">
-                <div className="space-y-4">
-                  <div className="text-5xl">✨</div>
-                  <h3 className="text-2xl font-bold text-blue-900 group-hover:text-blue-700">Join Now</h3>
-                  <p className="text-blue-700">
-                    Ready to join? Submit your request and join our community.
-                  </p>
-                </div>
-              </Card>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold">
-            Ready to Clash?
-          </h2>
-          <p className="text-xl text-blue-100">
-            Join {SITE_CONFIG.name} and become part of an elite Clash of Clans community.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
+          {/* CTA Buttons */}
+          <div className="flex gap-4 justify-center flex-wrap pt-8">
             <Link href="/join">
-              <Button variant="primary" size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="bg-white text-blue-900 hover:bg-blue-50 font-bold px-8 py-4 text-lg"
+              >
                 Request to Join
               </Button>
             </Link>
             <a href={SITE_CONFIG.social.discord} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-bold px-8 py-4 text-lg"
+              >
                 Join Discord
+              </Button>
+            </a>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
+          <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      </section>
+
+      {/* Info Sections - Clean & Focused */}
+      <section className="bg-gradient-to-b from-black to-blue-950 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Members Card */}
+            <Link href="/members" className="group">
+              <div className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 transition-all duration-300 group-hover:border-white/50 group-hover:scale-105">
+                <div className="text-5xl mb-4">👥</div>
+                <h3 className="text-2xl font-bold text-white mb-2">39 Members</h3>
+                <p className="text-blue-200">Competitive players from across Australia</p>
+              </div>
+            </Link>
+
+            {/* Wars Card */}
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8">
+              <div className="text-5xl mb-4">⚔️</div>
+              <h3 className="text-2xl font-bold text-white mb-2">114 War Wins</h3>
+              <p className="text-blue-200">Proven track record of success</p>
+            </div>
+
+            {/* Events Card */}
+            <Link href="/events" className="group">
+              <div className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 transition-all duration-300 group-hover:border-white/50 group-hover:scale-105">
+                <div className="text-5xl mb-4">📅</div>
+                <h3 className="text-2xl font-bold text-white mb-2">Regular Events</h3>
+                <p className="text-blue-200">Wars, CWL, and challenges year-round</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA - Sleek & Modern */}
+      <section className="relative bg-gradient-to-r from-blue-900 via-purple-900 to-black py-20 overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl"></div>
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-white">
+            Ready to Clash?
+          </h2>
+          <p className="text-lg text-blue-200">
+            Join an elite Australian Clash of Clans community. Apply now and let's dominate together.
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap pt-4">
+            <Link href="/join">
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="bg-white text-purple-900 hover:bg-blue-50 font-bold px-8 py-4"
+              >
+                Apply Now
+              </Button>
+            </Link>
+            <a href={SITE_CONFIG.social.discord} target="_blank" rel="noopener noreferrer">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-2 border-white text-white hover:bg-white/10 font-bold px-8 py-4"
+              >
+                Our Discord
               </Button>
             </a>
           </div>
