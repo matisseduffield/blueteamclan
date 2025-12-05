@@ -49,7 +49,7 @@ export default function Home() {
               <Button 
                 variant="primary" 
                 size="lg" 
-                className="bg-white text-blue-900 hover:bg-blue-50 font-bold px-8 py-4 text-lg"
+                className="bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
               >
                 Request to Join
               </Button>
@@ -58,7 +58,7 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-bold px-8 py-4 text-lg"
+                className="border-2 border-white text-white hover:bg-white hover:text-purple-900 font-bold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
               >
                 Join Discord
               </Button>
@@ -126,7 +126,7 @@ export default function Home() {
               <Button 
                 variant="primary" 
                 size="lg" 
-                className="bg-white text-purple-900 hover:bg-blue-50 font-bold px-8 py-4"
+                className="bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-4 shadow-lg hover:shadow-xl transition-all"
               >
                 Apply Now
               </Button>
@@ -135,7 +135,7 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-2 border-white text-white hover:bg-white/10 font-bold px-8 py-4"
+                className="border-2 border-white text-white hover:bg-white hover:text-purple-900 font-bold px-8 py-4 shadow-lg hover:shadow-xl transition-all"
               >
                 Our Discord
               </Button>

@@ -6,7 +6,7 @@ export const SITE_CONFIG = {
   domain: "blueteamclan.com",
   region: "Australia",
   social: {
-    discord: "https://discord.gg/blueteamclan",
+    discord: "https://discord.gg/Aw7ktSjpBy",
     twitter: "https://twitter.com/blueteamclan",
     youtube: "https://youtube.com/@blueteamclan",
   },
