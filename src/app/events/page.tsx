@@ -1,326 +1,831 @@
 "use client";
 
-import Card from "@/components/common/Card";
-import { useCWLStatus, useRaidStatus, useUniversalEvents, useWarStatus } from "@/lib/hooks/useClashStatus";
+import { useState, useEffect } from "react";
+import { 
+  Shield, Swords, Star, Clock, XCircle, Search, 
+  RefreshCw, Calendar, Globe, Gift, Award, Layout
+} from "lucide-react";
 
-type UniversalEvent = {
-  id: string;
-  name: string;
-  description?: string;
-  startDate?: Date;
-  endDate?: Date;
-  type?: string;
-  source?: string;
+const useCurrentTime = () => {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return now;
+};
+
+const formatDuration = (start: Date, end: Date) => {
+  const totalSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
+  if (totalSeconds < 0) return "Processing...";
+  
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
+
+const getEventStatus = (eventName: string, now: Date) => {
+  const utcNow = now;
+  const currentYear = utcNow.getUTCFullYear();
+  const currentMonth = utcNow.getUTCMonth();
+  const currentDay = utcNow.getUTCDate();
+  const currentWeekday = utcNow.getUTCDay();
+
+  let state = 'upcoming';
+  let targetDate = new Date();
+  let description = "";
+
+  switch (eventName) {
+    case 'Raid Weekend':
+      const isWeekend = (currentWeekday === 5 && utcNow.getUTCHours() >= 7) || 
+                        (currentWeekday === 6) || 
+                        (currentWeekday === 0) || 
+                        (currentWeekday === 1 && utcNow.getUTCHours() < 7);
+      
+      if (isWeekend) {
+        state = 'active';
+        const daysUntilMonday = (1 + 7 - currentWeekday) % 7;
+        targetDate = new Date(Date.UTC(currentYear, currentMonth, currentDay + daysUntilMonday, 7, 0, 0));
+        if (targetDate <= utcNow) targetDate.setDate(targetDate.getDate() + 7); 
+      } else {
+        state = 'upcoming';
+        const daysUntilFriday = (5 + 7 - currentWeekday) % 7;
+        targetDate = new Date(Date.UTC(currentYear, currentMonth, currentDay + daysUntilFriday, 7, 0, 0));
+      }
+      description = "Raids open every weekend";
+      break;
+
+    case 'Trader Refresh':
+      state = 'upcoming';
+      let daysUntilTuesday = (2 + 7 - currentWeekday) % 7;
+      targetDate = new Date(Date.UTC(currentYear, currentMonth, currentDay + daysUntilTuesday, 8, 0, 0));
+      
+      if (targetDate <= utcNow) {
+        targetDate.setDate(targetDate.getDate() + 7);
+      }
+      description = "Weekly deals reset";
+      break;
+
+    case 'CWL':
+      const cwlStart = new Date(Date.UTC(currentYear, currentMonth, 1, 8, 0, 0));
+      const cwlEnd = new Date(Date.UTC(currentYear, currentMonth, 11, 8, 0, 0));
+
+      if (utcNow >= cwlStart && utcNow < cwlEnd) {
+        state = 'active';
+        targetDate = cwlEnd;
+      } else {
+        state = 'upcoming';
+        targetDate = new Date(Date.UTC(currentYear, currentMonth + 1, 1, 8, 0, 0));
+      }
+      description = "Monthly War League";
+      break;
+
+    case 'Clan Games':
+      const cgStart = new Date(Date.UTC(currentYear, currentMonth, 22, 8, 0, 0));
+      const cgEnd = new Date(Date.UTC(currentYear, currentMonth, 28, 8, 0, 0));
+
+      if (utcNow >= cgStart && utcNow < cgEnd) {
+        state = 'active';
+        targetDate = cgEnd;
+      } else if (utcNow < cgStart) {
+        state = 'upcoming';
+        targetDate = cgStart;
+      } else {
+        state = 'upcoming';
+        targetDate = new Date(Date.UTC(currentYear, currentMonth + 1, 22, 8, 0, 0));
+      }
+      description = "Complete challenges for rewards";
+      break;
+
+    case 'League Reset':
+      let d = new Date(Date.UTC(currentYear, currentMonth + 1, 0));
+      while (d.getUTCDay() !== 1) {
+        d.setDate(d.getDate() - 1);
+      }
+      d.setUTCHours(5, 0, 0, 0);
+
+      if (utcNow < d) {
+        state = 'upcoming';
+        targetDate = d;
+      } else {
+        d = new Date(Date.UTC(currentYear, currentMonth + 2, 0));
+        while (d.getUTCDay() !== 1) {
+          d.setDate(d.getDate() - 1);
+        }
+        d.setUTCHours(5, 0, 0, 0);
+        state = 'upcoming';
+        targetDate = d;
+      }
+      description = "Legend League trophy reset";
+      break;
+
+    case 'Season End':
+      state = 'upcoming';
+      targetDate = new Date(Date.UTC(currentYear, currentMonth + 1, 1, 8, 0, 0));
+      description = "Gold Pass & Monthly Season";
+      break;
+
+    default:
+      break;
+  }
+
+  return { state, targetDate, description };
+};
+
+type EventCardProps = {
+  title: string;
+  icon: any;
+  colorClass: string;
+  now: Date;
+};
+
+const EventCard = ({ title, icon: Icon, colorClass, now }: EventCardProps) => {
+  const { state, targetDate, description } = getEventStatus(title, now);
+  const timeLeft = formatDuration(now, targetDate);
+  const isActive = state === 'active';
+
+  return (
+    <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 relative overflow-hidden group hover:border-slate-600 transition-colors">
+      {isActive && (
+        <div className="absolute top-0 right-0 p-2">
+          <span className="flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          </span>
+        </div>
+      )}
+      
+      <div className="flex items-start justify-between mb-4 relative z-10">
+        <div className={`p-3 rounded-lg ${colorClass} bg-opacity-20 text-white`}>
+          <Icon size={24} />
+        </div>
+        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
+          {isActive ? 'Active Now' : 'Upcoming'}
+        </div>
+      </div>
+
+      <h3 className="text-lg font-bold text-white mb-1">{title}</h3>
+      <p className="text-slate-400 text-xs mb-4 h-8">{description}</p>
+
+      <div className="bg-slate-900/50 rounded-lg p-2 border border-slate-700/50">
+        <div className="text-[10px] text-slate-500 uppercase mb-1">
+          {isActive ? 'Ends In' : title === 'Trader Refresh' ? 'Refreshes In' : 'Starts In'}
+        </div>
+        <div className="font-mono text-xl font-bold text-slate-200 tabular-nums tracking-tight">
+          {timeLeft}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WarTracker = () => {
+  const [status, setStatus] = useState('loading');
+  const [logs, setLogs] = useState<{ time: string; msg: string }[]>([]);
+  const [warData, setWarData] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isCWL, setIsCWL] = useState(false);
+  const [cwlStandings, setCWLStandings] = useState<any[]>([]);
+  const [groupData, setGroupData] = useState<any>(null);
+
+  const clanTag = "#2Q98GJ0J2";
+
+  const addLog = (message: string) => {
+    setLogs(prev => [...prev, { time: new Date().toLocaleTimeString(), msg: message }]);
+  };
+
+  const formatTag = (tag: string) => encodeURIComponent(tag);
+
+  const fetchWarData = async () => {
+    setStatus('loading');
+    setLogs([]);
+    setWarData(null);
+    setCWLStandings([]);
+    setErrorMessage("");
+
+    addLog(`Starting fetch for Clan Tag: ${clanTag}`);
+
+    try {
+      addLog("Step 1: Fetching League Group...");
+      const groupUrl = `/api/coc?endpoint=/clans/${formatTag(clanTag)}/currentwar/leaguegroup`;
+      
+      const groupRes = await fetch(groupUrl);
+
+      if (!groupRes.ok) {
+        if (groupRes.status === 404) {
+          addLog("Clan is not currently in a Clan War League.");
+          setStatus('nowar');
+          return;
+        }
+        if (groupRes.status === 403) throw new Error("Access Denied (403). IP Restricted or Invalid API Key.");
+        throw new Error(`API Error: ${groupRes.status} ${groupRes.statusText}`);
+      }
+
+      const groupData = await groupRes.json();
+      const season = groupData.season;
+      
+      // Store for later use in rendering
+      setGroupData(groupData);
+      
+      // Step 2: Calculate cumulative standings from all rounds
+      addLog("Step 2: Calculating cumulative CWL standings...");
+      addLog("Using war stars +10 win bonus on completed wars; active wars count live stars without bonus. Destruction (sum of attack % where available) is the tie-breaker.");
+      
+      // Initialize standings map for all clans
+      const standingsMap = new Map<string, any>();
+      (groupData.clans || []).forEach((clan: any) => {
+        standingsMap.set(clan.tag, {
+          tag: clan.tag,
+          name: clan.name,
+          totalStars: 0,
+          totalDestruction: 0,
+          warCount: 0,
+          wins: 0,
+          badge: clan.badgeUrls,
+        });
+      });
+      
+      // Iterate through all rounds and sum up stats
+      const rounds = groupData.rounds || [];
+      addLog(`Processing ${rounds.length} rounds...`);
+      
+      // First, process ALL wars in ALL rounds before calculating final standings
+      const allWars: any[] = [];
+      
+      for (let roundIdx = 0; roundIdx < rounds.length; roundIdx++) {
+        const round = rounds[roundIdx];
+        const warTags = round.warTags || [];
+        const activeWarTags = warTags.filter((t: string) => t !== "#0");
+        addLog(`Round ${roundIdx + 1}: ${warTags.length} total tags, ${activeWarTags.length} active wars: ${activeWarTags.join(", ")}`);
+        
+        // Fetch each war in this round
+        for (const warTag of warTags) {
+          if (warTag === "#0") continue;
+          
+          try {
+            const warRes = await fetch(`/api/coc?endpoint=/clanwarleagues/wars/${formatTag(warTag)}`);
+            if (!warRes.ok) continue;
+            
+            const warData = await warRes.json();
+            allWars.push(warData);
+            
+            // Log war data for debugging
+            addLog(`War: ${warData.clan.name} (${warData.clan.stars}⭐) vs ${warData.opponent.name} (${warData.opponent.stars}⭐)`);
+          } catch (e) {
+            // Log error but continue
+            addLog(`Error fetching war ${warTag}: ${e}`);
+          }
+        }
+      }
+      
+      // Now process all wars and accumulate stats
+      addLog(`Processing ${allWars.length} total wars...`);
+      const completedWars = allWars.filter((w) => w.state === 'warEnded');
+      const activeWars = allWars.filter((w) => w.state === 'inWar');
+      addLog(`Completed wars: ${completedWars.length}; Active wars: ${activeWars.length}`);
+
+      // Determine winner for win bonus (+10 war stars) and tie-breaker
+      const resolveOutcome = (a: any, b: any) => {
+        if ((a.stars || 0) > (b.stars || 0)) return 'a';
+        if ((a.stars || 0) < (b.stars || 0)) return 'b';
+        if ((a.destructionPercentage || 0) > (b.destructionPercentage || 0)) return 'a';
+        if ((a.destructionPercentage || 0) < (b.destructionPercentage || 0)) return 'b';
+        return 'tie';
+      };
+
+      // Compute total destruction as sum of each member attack's destruction (preferred) or null if unavailable
+      const sumAttackDestruction = (war: any, clanSide: 'clan' | 'opponent') => {
+        const members = war?.[clanSide]?.members || [];
+        if (!Array.isArray(members) || members.length === 0) return null;
+
+        let total = 0;
+        let countedAttacks = 0;
+        for (const m of members) {
+          if (!m?.attacks) continue;
+          for (const atk of m.attacks) {
+            total += atk?.destructionPercentage || 0;
+            countedAttacks += 1;
+          }
+        }
+        if (countedAttacks === 0) return null;
+        return total;
+      };
+
+      for (const warData of completedWars) {
+        const winner = resolveOutcome(warData.clan, warData.opponent);
+
+        const applyWarStats = (entryTag: string, side: any, result: 'win' | 'lose' | 'tie', attackDestruction: number | null) => {
+          if (!standingsMap.has(entryTag)) return;
+          const entry = standingsMap.get(entryTag);
+          const winBonus = result === 'win' ? 10 : 0;
+          entry.totalStars += (side.stars || 0) + winBonus;
+          // Prefer sum of attack destruction; fallback to war-wide destructionPercentage if attacks unavailable
+          if (attackDestruction !== null) {
+            entry.totalDestruction += attackDestruction;
+          } else {
+            entry.totalDestruction += side.destructionPercentage || 0;
+          }
+          entry.warCount += 1;
+          if (result === 'win') entry.wins += 1;
+        };
+
+        const clanResult = winner === 'a' ? 'win' : winner === 'b' ? 'lose' : 'tie';
+        const oppResult = winner === 'b' ? 'win' : winner === 'a' ? 'lose' : 'tie';
+
+        const clanAttackDestruction = sumAttackDestruction(warData, 'clan');
+        const oppAttackDestruction = sumAttackDestruction(warData, 'opponent');
+
+        applyWarStats(warData.clan.tag, warData.clan, clanResult, clanAttackDestruction);
+        applyWarStats(warData.opponent.tag, warData.opponent, oppResult, oppAttackDestruction);
+      }
+
+      // Add live (inWar) wars without win bonus for real-time ladder view
+      const applyLiveWarStats = (entryTag: string, side: any, attackDestruction: number | null) => {
+        if (!standingsMap.has(entryTag)) return;
+        const entry = standingsMap.get(entryTag);
+        entry.totalStars += side.stars || 0;
+        if (attackDestruction !== null) {
+          entry.totalDestruction += attackDestruction;
+        } else {
+          entry.totalDestruction += side.destructionPercentage || 0;
+        }
+        entry.warCount += 1;
+      };
+
+      for (const warData of activeWars) {
+        const clanAttackDestruction = sumAttackDestruction(warData, 'clan');
+        const oppAttackDestruction = sumAttackDestruction(warData, 'opponent');
+        applyLiveWarStats(warData.clan.tag, warData.clan, clanAttackDestruction);
+        applyLiveWarStats(warData.opponent.tag, warData.opponent, oppAttackDestruction);
+        addLog(`Live war included: ${warData.clan.name} (${warData.clan.stars}⭐) vs ${warData.opponent.name} (${warData.opponent.stars}⭐)`);
+      }
+      
+      // Convert map to array
+      const standings = Array.from(standingsMap.values()).map((clan: any) => ({
+        tag: clan.tag,
+        name: clan.name,
+        stars: clan.totalStars,
+        destruction: clan.totalDestruction,
+        warCount: clan.warCount,
+        wins: clan.wins,
+        badge: clan.badge,
+      }));
+      
+      // Sort by stars, then destruction (tie-breaker)
+      standings.sort((a: any, b: any) => {
+        if (b.stars !== a.stars) return b.stars - a.stars;
+        return b.destruction - a.destruction;
+      });
+      
+      setCWLStandings(standings);
+      addLog(`Calculated standings for ${standings.length} clans`);
+      
+      // Log standings for debugging
+      standings.forEach((clan: any, idx: number) => {
+        const clanData = standingsMap.get(clan.tag);
+        addLog(`#${idx + 1}: ${clan.name} - ${clan.stars} stars, ${clan.destruction.toFixed(1)}% destruction (${clanData?.warCount || 0} wars, ${clanData?.wins || 0} wins)`);
+      });
+      
+      // Summary
+      addLog(`=== FINAL STANDINGS ===`);
+      addLog(`Total clans: ${standings.length}`);
+      addLog(`Total wars processed (all): ${allWars.length}`);
+      addLog(`Total wars counted (ended only): ${completedWars.length}`);
+      addLog(`Expected wars in CWL: 28 (8 clans × 7 rounds / 2)`);
+      const myCllan = standings.find((c: any) => c.tag === clanTag);
+      if (myCllan) {
+        const myData = standingsMap.get(clanTag);
+        addLog(`Blue Team Clan: ${myCllan.stars} stars, ${myCllan.destruction.toFixed(1)}% destruction (${myData?.warCount || 0} wars, ${myData?.wins || 0} wins, Position: ${standings.indexOf(myCllan) + 1})`);
+      }
+      
+      // Step 3: Find the current war (if any) for war display
+      addLog("Step 3: Looking for current war matchup across all rounds...");
+
+      const stateScore: Record<string, number> = { inWar: 3, preparation: 2, warEnded: 1 };
+
+      // Reuse allWars fetched earlier; pick the best match for this clan
+      const candidateWars = allWars.filter((w: any) => w && (w.clan.tag === clanTag || w.opponent.tag === clanTag));
+      addLog(`Found ${candidateWars.length} wars involving clan; prioritizing in-war over prep.`);
+
+      const foundWar = candidateWars
+        .sort((a: any, b: any) => {
+          const sa = stateScore[a.state] ?? 0;
+          const sb = stateScore[b.state] ?? 0;
+          if (sb !== sa) return sb - sa;
+          // If same state, prefer the one ending later (newer war)
+          const endA = a.endTime ? Date.parse(a.endTime) : 0;
+          const endB = b.endTime ? Date.parse(b.endTime) : 0;
+          return endB - endA;
+        })[0];
+
+      if (foundWar) {
+        addLog(`Match found! Using war in state: ${foundWar.state}`);
+        addLog(`Current War -> ${foundWar.clan.name}: ${foundWar.clan.stars}⭐, ${foundWar.clan.destructionPercentage}% destruction, attacks used: ${foundWar.clan.attacks || 0}`);
+        addLog(`Current War -> ${foundWar.opponent.name}: ${foundWar.opponent.stars}⭐, ${foundWar.opponent.destructionPercentage}% destruction, attacks used: ${foundWar.opponent.attacks || 0}`);
+        setWarData(foundWar);
+        setIsCWL(true); // This is from CWL endpoint
+        setStatus('success');
+      } else {
+        addLog("No war found for this clan.");
+        setStatus('nowar');
+      }
+
+    } catch (error: any) {
+      setErrorMessage(error.message);
+      setStatus('error');
+      addLog(`Error: ${error.message}`);
+    }
+  };
+
+  useEffect(() => {
+    fetchWarData();
+  }, []);
+
+  const renderStatusBadge = (state: string) => {
+    switch(state) {
+      case 'inWar': return <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-bold animate-pulse">In War</span>;
+      case 'preparation': return <span className="px-3 py-1 bg-yellow-500 text-white rounded-full text-sm font-bold">Preparation</span>;
+      default: return <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-bold">{state}</span>;
+    }
+  };
+
+  const getMyClan = (war: any) => war.clan.tag === clanTag ? war.clan : war.opponent;
+  const getEnemyClan = (war: any) => war.clan.tag === clanTag ? war.opponent : war.clan;
+
+  return (
+    <div className="animate-in fade-in duration-500">
+      {status === 'loading' && (
+        <div className="bg-slate-800 rounded-xl p-8 border border-slate-700 shadow-xl text-center">
+          <RefreshCw className="animate-spin mx-auto mb-4 text-yellow-500" size={32}/>
+          <h2 className="text-xl font-semibold text-white mb-2">Scanning for Active Wars...</h2>
+          <p className="text-slate-400 text-sm">Checking CWL status for {clanTag}</p>
+        </div>
+      )}
+
+      {status === 'nowar' && (
+        <div className="bg-slate-800 rounded-xl p-8 border border-slate-700 shadow-xl text-center">
+          <div className="text-6xl mb-4">😴</div>
+          <h2 className="text-2xl font-bold text-white mb-2">No Active War</h2>
+          <p className="text-slate-400">The clan is not currently in a CWL war.</p>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="bg-red-900/20 border border-red-800 text-red-200 p-6 rounded-xl flex items-start gap-3">
+          <XCircle className="shrink-0 mt-0.5" size={24} />
+          <div>
+            <h3 className="font-bold text-lg mb-1">Failed to Fetch War Data</h3>
+            <p className="text-sm opacity-90">{errorMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {status === 'success' && warData && (() => {
+        const myClan = getMyClan(warData);
+        const enemyClan = getEnemyClan(warData);
+        const teamSize = warData.teamSize || 15;
+        const maxStars = teamSize * 3;
+        const attacksPerPlayer = isCWL ? 1 : 2;
+        const maxAttacks = teamSize * attacksPerPlayer;
+        
+        return (
+          <div className="space-y-6">
+            {/* War Type & Status Banner */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="text-2xl font-bold text-white">
+                {isCWL ? 'Clan War League' : 'Clan War'}
+              </div>
+              {renderStatusBadge(warData.state)}
+            </div>
+
+            {/* Main War Display */}
+            <div className="bg-gradient-to-b from-slate-900 to-black rounded-2xl border border-slate-800/50 p-8 md:p-12 relative overflow-hidden">
+              {/* Animated background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/10 via-transparent to-blue-900/10"></div>
+              
+              <div className="flex flex-col md:flex-row justify-between items-center gap-12 relative z-10">
+                {/* Blue Team (Our Clan) */}
+                <div className="flex flex-col items-center text-center flex-1">
+                  <div className="relative group mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
+                    <div className="relative w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-cyan-500/30 group-hover:ring-cyan-400/50 transition-all duration-500">
+                      <img
+                        src={myClan.badgeUrls?.medium || myClan.badgeUrls?.small}
+                        alt={myClan.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black text-white mb-2">{myClan.name}</h2>
+                  <p className="text-sm text-slate-500 mb-6">Team Size: {teamSize}</p>
+                  
+                  {/* Stats Grid */}
+                  <div className="space-y-3 w-full max-w-[280px]">
+                    {/* Stars */}
+                    <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 backdrop-blur-sm border border-yellow-500/20 rounded-xl p-4 hover:border-yellow-500/40 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Star size={18} className="text-yellow-400" fill="currentColor" />
+                          <span className="text-sm font-semibold text-yellow-400">Stars</span>
+                        </div>
+                        <span className="text-xs text-slate-500">of {maxStars}</span>
+                      </div>
+                      <div className="text-3xl font-black text-white">
+                        {myClan.stars}<span className="text-xl text-slate-600">/{maxStars}</span>
+                      </div>
+                      <div className="mt-2 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 transition-all duration-500"
+                          style={{ width: `${(myClan.stars / maxStars) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Destruction */}
+                    <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 backdrop-blur-sm border border-red-500/20 rounded-xl p-4 hover:border-red-500/40 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Swords size={18} className="text-red-400" />
+                          <span className="text-sm font-semibold text-red-400">Destruction</span>
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-white">
+                        {myClan.destructionPercentage.toFixed(1)}<span className="text-xl text-slate-600">%</span>
+                      </div>
+                      <div className="mt-2 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-500"
+                          style={{ width: `${myClan.destructionPercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Attacks Used */}
+                    <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-4 hover:border-cyan-500/40 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Shield size={18} className="text-cyan-400" />
+                          <span className="text-sm font-semibold text-cyan-400">Attacks</span>
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-white">
+                        {myClan.attacks || 0}<span className="text-xl text-slate-600">/{maxAttacks}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* VS Divider */}
+                <div className="flex flex-col items-center justify-center">
+                  <div className="text-5xl md:text-6xl font-black bg-gradient-to-br from-slate-700 to-slate-800 bg-clip-text text-transparent">
+                    VS
+                  </div>
+                </div>
+
+                {/* Enemy Clan */}
+                <div className="flex flex-col items-center text-center flex-1">
+                  <div className="relative group mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
+                    <div className="relative w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-red-500/30 group-hover:ring-red-400/50 transition-all duration-500">
+                      <img
+                        src={enemyClan.badgeUrls?.medium || enemyClan.badgeUrls?.small}
+                        alt={enemyClan.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black text-white mb-2">{enemyClan.name}</h2>
+                  <p className="text-sm text-slate-500 mb-6">Team Size: {teamSize}</p>
+                  
+                  {/* Stats Grid */}
+                  <div className="space-y-3 w-full max-w-[280px]">
+                    {/* Stars */}
+                    <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 backdrop-blur-sm border border-yellow-500/20 rounded-xl p-4 hover:border-yellow-500/40 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Star size={18} className="text-yellow-400" fill="currentColor" />
+                          <span className="text-sm font-semibold text-yellow-400">Stars</span>
+                        </div>
+                        <span className="text-xs text-slate-500">of {maxStars}</span>
+                      </div>
+                      <div className="text-3xl font-black text-white">
+                        {enemyClan.stars}<span className="text-xl text-slate-600">/{maxStars}</span>
+                      </div>
+                      <div className="mt-2 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 transition-all duration-500"
+                          style={{ width: `${(enemyClan.stars / maxStars) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Destruction */}
+                    <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 backdrop-blur-sm border border-red-500/20 rounded-xl p-4 hover:border-red-500/40 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Swords size={18} className="text-red-400" />
+                          <span className="text-sm font-semibold text-red-400">Destruction</span>
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-white">
+                        {enemyClan.destructionPercentage.toFixed(1)}<span className="text-xl text-slate-600">%</span>
+                      </div>
+                      <div className="mt-2 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-500"
+                          style={{ width: `${enemyClan.destructionPercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Attacks Used */}
+                    <div className="bg-gradient-to-br from-red-500/10 to-orange-600/5 backdrop-blur-sm border border-red-500/20 rounded-xl p-4 hover:border-red-500/40 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Shield size={18} className="text-red-400" />
+                          <span className="text-sm font-semibold text-red-400">Attacks</span>
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-white">
+                        {enemyClan.attacks || 0}<span className="text-xl text-slate-600">/{maxAttacks}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CWL Standings */}
+            {isCWL && cwlStandings.length > 0 && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">CWL Standings</h3>
+                  <p className="text-sm text-slate-400">Season {groupData?.season || 'Current'} - {groupData?.tier || 'League'}</p>
+                </div>
+                <div className="grid gap-3">
+                  {cwlStandings.map((clan, idx) => {
+                    const isMyClan = clan.tag === clanTag;
+                    return (
+                      <div 
+                        key={clan.tag}
+                        className={`relative overflow-hidden rounded-xl border transition-all duration-300 ${
+                          isMyClan 
+                            ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-500/50 ring-2 ring-cyan-500/30' 
+                            : 'bg-slate-900/50 border-slate-800/50 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4 p-4">
+                          {/* Rank */}
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-800/50 text-center">
+                            <span className="font-black text-lg text-white">#{idx + 1}</span>
+                          </div>
+
+                          {/* Badge */}
+                          <div className="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-slate-700 flex-shrink-0">
+                            <img
+                              src={clan.badge?.medium || clan.badge?.small}
+                              alt={clan.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          {/* Clan Name */}
+                          <div className="flex-grow min-w-0">
+                            <h4 className="text-white font-bold truncate">{clan.name}</h4>
+                            {isMyClan && (
+                              <span className="text-xs text-cyan-400 font-semibold">YOUR CLAN</span>
+                            )}
+                          </div>
+
+                          {/* Stars & destruction tie-breaker */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 bg-yellow-500/20 px-4 py-2 rounded-lg border border-yellow-500/30 min-w-fit">
+                              <Star size={18} className="text-yellow-400" fill="currentColor" />
+                              <div className="flex flex-col leading-tight">
+                                <span className="text-[11px] uppercase tracking-wide text-yellow-200/80">War Stars</span>
+                                <span className="font-bold text-yellow-400 text-lg">{clan.stars}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 bg-slate-800/70 px-4 py-2 rounded-lg border border-slate-700 min-w-fit">
+                              <Swords size={18} className="text-cyan-300" />
+                              <div className="flex flex-col leading-tight text-left">
+                                <span className="text-[11px] uppercase tracking-wide text-slate-300/70">Destruction</span>
+                                <span className="font-bold text-white text-lg">{clan.destruction?.toFixed(1) || '0.0'}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      <div className="bg-black/40 rounded-lg p-4 font-mono text-xs border border-white/5 h-48 overflow-y-auto mt-6">
+        <div className="text-slate-500 mb-2 border-b border-white/10 pb-1">System Logs</div>
+        {logs.length === 0 ? (
+          <span className="text-slate-600 italic">Initializing...</span>
+        ) : (
+          logs.map((log, i) => (
+            <div key={i} className="mb-1">
+              <span className="text-slate-500">[{log.time}]</span> <span className="text-green-400">{log.msg}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default function EventsPage() {
-  const { cwlStatus } = useCWLStatus();
-  const { warStatus } = useWarStatus();
-  const { raidStatus } = useRaidStatus();
-  const { events: universalEvents } = useUniversalEvents();
+  const [activeTab, setActiveTab] = useState('tracker');
+  
+  const now = useCurrentTime();
 
   return (
-    <div className="space-y-0 min-h-screen bg-gradient-to-b from-black to-blue-950">
-      <section className="bg-gradient-to-b from-blue-900/50 to-purple-900/50 text-white py-20 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-2">
-            <h1 className="text-5xl font-bold">Events & Calendar</h1>
-            <p className="text-blue-200 text-lg">Clan activities and universal Clash events</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center">
-            <span className="text-3xl mr-3">🎯</span>
-            Current Clan Activities
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <CWLCard cwlStatus={cwlStatus} />
-            <WarCard warStatus={warStatus} />
-            <RaidCard raidStatus={raidStatus} />
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center">
-            <span className="text-3xl mr-3">📅</span>
-            Universal Clash Events
-          </h2>
-
-          {universalEvents.length > 0 ? (
-            <div className="space-y-4">
-              {universalEvents.map((event) => (
-                <UniversalEventCard key={event.id} event={event} />
-              ))}
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-yellow-500/30">
+      <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="bg-yellow-500 p-2 rounded-lg">
+                <Swords size={20} className="text-slate-900" />
+              </div>
+              <span className="font-bold text-lg hidden sm:block">Clash Manager</span>
             </div>
-          ) : (
-            <Card className="bg-white/10 backdrop-blur-md border border-white/20 text-center py-8">
-              <p className="text-white/60">Loading universal events...</p>
-            </Card>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function CWLCard({ cwlStatus }: any) {
-  if (!cwlStatus) return null;
-
-  if (cwlStatus.status === "inactive") {
-    return (
-      <Card className="bg-white/10 backdrop-blur-md border border-white/20">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl">🏆</span>
-          <div>
-            <h3 className="text-lg font-bold text-white">Clan War League</h3>
-            <p className="text-sm text-white/60">Not in CWL</p>
+            
+            <div className="flex space-x-1 bg-slate-900/50 p-1 rounded-lg">
+              <button 
+                onClick={() => setActiveTab('tracker')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'tracker' 
+                    ? 'bg-slate-700 text-white shadow-sm' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                War Tracker
+              </button>
+              <button 
+                onClick={() => setActiveTab('events')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTab === 'events' 
+                    ? 'bg-slate-700 text-white shadow-sm' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Global Events
+              </button>
+            </div>
           </div>
         </div>
-        <p className="text-white/70 text-sm">We will enter CWL next season. Check back soon!</p>
-      </Card>
-    );
-  }
+      </div>
 
-  return (
-    <Card className="bg-gradient-to-br from-purple-500/20 to-purple-900/20 backdrop-blur-md border border-purple-400/30 hover:border-purple-400/60 transition-all">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl animate-pulse">🏆</span>
-          <div>
-            <h3 className="text-lg font-bold text-white">Clan War League</h3>
-            <p className="text-sm text-purple-200">ACTIVE</p>
-          </div>
-        </div>
+      <div className="max-w-5xl mx-auto p-4 md:p-8">
+        {activeTab === 'tracker' && (
+          <WarTracker />
+        )}
 
-        <div className="grid grid-cols-2 gap-4 py-3 border-y border-white/10">
-          <div>
-            <p className="text-xs text-white/60">Our Rank</p>
-            <p className="text-2xl font-bold text-purple-300">#{cwlStatus.rank}/{cwlStatus.totalClans}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60">Wins</p>
-            <p className="text-2xl font-bold text-green-400">{cwlStatus.clanWins}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60">Destruction</p>
-            <p className="text-2xl font-bold text-blue-400">{cwlStatus.destruction?.toFixed(1)}%</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60">Members</p>
-            <p className="text-2xl font-bold text-yellow-400">{cwlStatus.members}</p>
-          </div>
-        </div>
-
-        {cwlStatus.opponents && cwlStatus.opponents.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-white/70">Opponents</p>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
-              {cwlStatus.opponents.map((opp: any, idx: number) => (
-                <div key={idx} className="flex justify-between text-xs bg-white/5 p-2 rounded">
-                  <span className="text-white/80 truncate">{opp.name}</span>
-                  <span className="text-yellow-400 font-semibold">{opp.wins}W</span>
+        {activeTab === 'events' && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Event Calendar</h1>
+                <p className="text-slate-400">Live countdowns for global Clash of Clans events (UTC).</p>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">Current UTC Time</div>
+                <div className="font-mono text-xl text-yellow-500">
+                  {now.toUTCString().slice(17, 25)}
                 </div>
-              ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <EventCard title="Raid Weekend" icon={Swords} colorClass="bg-red-500" now={now} />
+              <EventCard title="Trader Refresh" icon={Gift} colorClass="bg-blue-500" now={now} />
+              <EventCard title="CWL" icon={Award} colorClass="bg-yellow-500" now={now} />
+              <EventCard title="Clan Games" icon={Layout} colorClass="bg-purple-500" now={now} />
+              <EventCard title="League Reset" icon={Calendar} colorClass="bg-indigo-500" now={now} />
+              <EventCard title="Season End" icon={Calendar} colorClass="bg-green-500" now={now} />
+            </div>
+
+            <div className="mt-8 p-4 bg-blue-900/20 border border-blue-800/50 rounded-xl flex gap-3 text-sm text-blue-200">
+              <Globe className="shrink-0 text-blue-400" size={20} />
+              <p>
+                All events are synchronized with the official Supercell server time (UTC). 
+                Adjustments for your local timezone happen automatically via the countdown timer.
+              </p>
             </div>
           </div>
         )}
       </div>
-    </Card>
-  );
-}
-
-function WarCard({ warStatus }: any) {
-  if (!warStatus) return null;
-
-  if (warStatus.status === "inactive") {
-    return (
-      <Card className="bg-white/10 backdrop-blur-md border border-white/20">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl">⚔️</span>
-          <div>
-            <h3 className="text-lg font-bold text-white">Clan War</h3>
-            <p className="text-sm text-white/60">Not in war</p>
-          </div>
-        </div>
-        <p className="text-white/70 text-sm">No active war at the moment.</p>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="bg-gradient-to-br from-red-500/20 to-red-900/20 backdrop-blur-md border border-red-400/30 hover:border-red-400/60 transition-all">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl animate-bounce">⚔️</span>
-          <div>
-            <h3 className="text-lg font-bold text-white">Clan War</h3>
-            <p className="text-sm text-red-200">IN PROGRESS</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="bg-white/5 p-3 rounded">
-            <p className="text-xs text-white/60 mb-2">vs. {warStatus.opponent?.name}</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-white">Our Clan</p>
-                <p className="text-2xl font-bold text-blue-400">{warStatus.clan?.stars}⭐</p>
-                <p className="text-xs text-white/60">{warStatus.clan?.destruction?.toFixed(1)}%</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-white/60">vs</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-white">{warStatus.opponent?.name}</p>
-                <p className="text-2xl font-bold text-red-400">{warStatus.opponent?.stars}⭐</p>
-                <p className="text-xs text-white/60">{warStatus.opponent?.destruction?.toFixed(1)}%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-white/5 p-2 rounded">
-              <p className="text-white/60">Team Size</p>
-              <p className="font-bold text-white">{warStatus.teamSize}v{warStatus.teamSize}</p>
-            </div>
-            <div className="bg-white/5 p-2 rounded">
-              <p className="text-white/60">Attacks Used</p>
-              <p className="font-bold text-white">{warStatus.clan?.attacks}/{warStatus.teamSize}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function RaidCard({ raidStatus }: any) {
-  if (!raidStatus) return null;
-
-  if (raidStatus.status === "inactive") {
-    return (
-      <Card className="bg-white/10 backdrop-blur-md border border-white/20">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl">💰</span>
-          <div>
-            <h3 className="text-lg font-bold text-white">Clan Capital Raid</h3>
-            <p className="text-sm text-white/60">Not in raid</p>
-          </div>
-        </div>
-        <p className="text-white/70 text-sm">No active raid at the moment.</p>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-900/20 backdrop-blur-md border border-yellow-400/30 hover:border-yellow-400/60 transition-all">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl animate-pulse">💰</span>
-          <div>
-            <h3 className="text-lg font-bold text-white">Clan Capital Raid</h3>
-            <p className="text-sm text-yellow-200">IN PROGRESS</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 py-3 border-y border-white/10">
-          <div>
-            <p className="text-xs text-white/60">Total Loot</p>
-            <p className="text-2xl font-bold text-yellow-300">{raidStatus.totalLoot}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60">Attacks</p>
-            <p className="text-2xl font-bold text-blue-400">{raidStatus.attacks}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60">Defenses</p>
-            <p className="text-2xl font-bold text-red-400">{raidStatus.defenseCount}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/60">Status</p>
-            <p className="text-sm font-bold text-green-400 capitalize">{raidStatus.state}</p>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function UniversalEventCard({ event }: any) {
-  const now = new Date();
-  const daysUntil = event.startDate ? Math.ceil((event.startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-  const isActive = event.startDate && event.endDate && now >= event.startDate && now <= event.endDate;
-  const source = event.source || "predicted_pattern";
-
-  const typeEmojis: { [key: string]: string } = {
-    clan_games: "🎮",
-    season_end: "🏁",
-    cwl: "🏆",
-    raid: "💰",
-    war: "⚔️",
-  };
-
-  const emoji = typeEmojis[event.type] || "📅";
-
-  return (
-    <Card className={`backdrop-blur-md transition-all ${
-      isActive
-        ? "bg-gradient-to-r from-emerald-500/25 to-emerald-900/25 border border-emerald-400/50"
-        : "bg-slate-900/60 border border-slate-700/70 hover:border-slate-500/80"
-    }`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl drop-shadow-sm">{emoji}</span>
-            <div>
-              <h3 className="text-lg font-bold text-white drop-shadow-sm">{event.name}</h3>
-              {isActive && (
-                <span className="inline-block bg-green-500 text-white text-xs font-bold px-2 py-1 rounded mt-1">
-                  NOW ACTIVE
-                </span>
-              )}
-              {source !== "official" && (
-                <span className="inline-block bg-amber-600 text-white text-[10px] font-semibold px-2 py-1 rounded mt-1">
-                  Pattern-based schedule
-                </span>
-              )}
-            </div>
-          </div>
-          <p className="text-white/85 text-sm mb-3 leading-relaxed">{event.description}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/10">
-        <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
-          <p className="text-xs text-white/70">Starts</p>
-          <p className="font-semibold text-white drop-shadow-sm">
-            {event.startDate?.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </p>
-          <p className="text-xs text-white/70">
-            {event.startDate?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </div>
-        <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
-          <p className="text-xs text-white/70">Ends</p>
-          <p className="font-semibold text-white drop-shadow-sm">
-            {event.endDate?.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </p>
-          <p className="text-xs text-white/70">
-            {event.endDate?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </div>
-        <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
-          <p className="text-xs text-white/70">Time Left</p>
-          <p className={`font-bold text-lg drop-shadow-sm ${daysUntil <= 0 ? "text-emerald-300" : "text-sky-300"}`}>
-            {daysUntil <= 0 ? "Active" : `${daysUntil}d`}
-          </p>
-        </div>
-      </div>
-    </Card>
+    </div>
   );
 }
