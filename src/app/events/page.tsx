@@ -16,7 +16,7 @@ const useCurrentTime = () => {
 };
 
 const formatDuration = (start: Date, end: Date) => {
-  const totalSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
+          const warRes = await fetch(`${apiBase}?endpoint=/clanwarleagues/wars/${formatTag(tag)}`);
   if (totalSeconds < 0) return "Processing...";
   
   const days = Math.floor(totalSeconds / (3600 * 24));
@@ -192,6 +192,7 @@ const WarTracker = () => {
   const [groupData, setGroupData] = useState<any>(null);
 
   const clanTag = "#2Q98GJ0J2";
+  const apiBase = process.env.NEXT_PUBLIC_COC_PROXY_URL || '/api/coc';
 
   const addLog = (message: string) => {
     setLogs(prev => [...prev, { time: new Date().toLocaleTimeString(), msg: message }]);
@@ -210,7 +211,7 @@ const WarTracker = () => {
 
     try {
       addLog("Step 1: Fetching League Group...");
-      const groupUrl = `/api/coc?endpoint=/clans/${formatTag(clanTag)}/currentwar/leaguegroup`;
+      const groupUrl = `${apiBase}?endpoint=/clans/${formatTag(clanTag)}/currentwar/leaguegroup`;
       
       const groupRes = await fetch(groupUrl);
 
@@ -266,7 +267,7 @@ const WarTracker = () => {
           if (warTag === "#0") continue;
           
           try {
-            const warRes = await fetch(`/api/coc?endpoint=/clanwarleagues/wars/${formatTag(warTag)}`);
+            const warRes = await fetch(`${apiBase}?endpoint=/clanwarleagues/wars/${formatTag(warTag)}`);
             if (!warRes.ok) continue;
             
             const warData = await warRes.json();
