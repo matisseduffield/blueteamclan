@@ -857,7 +857,6 @@ export default function EventsPage() {
                               <span className="font-mono text-yellow-200">{formatDuration(now, nextEvent.targetDate)}</span>
                             </div>
                             <div className="text-slate-400">{formatUTC(nextEvent.targetDate)}</div>
-                            <div className="text-slate-400">{nextEvent.targetDate.toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}</div>
                           </div>
                         )}
                       </div>
@@ -865,13 +864,13 @@ export default function EventsPage() {
                       <div className="w-full lg:w-auto">
                         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-lg min-w-[260px]">
                           <div className="flex items-center justify-between text-slate-400 text-xs uppercase tracking-widest">
-                            <span>Local Time</span>
+                            <span>Current UTC</span>
                             <Clock size={14} className="text-yellow-400" />
                           </div>
                           <div className="font-mono text-3xl text-yellow-400 tracking-tight">
-                            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {now.toUTCString().slice(17, 25)}
                           </div>
-                          <div className="text-xs text-slate-500">{now.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', timeZoneName: 'short' })}</div>
+                          <div className="text-xs text-slate-500">{now.toUTCString().replace('GMT', 'UTC')}</div>
                           <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
                             <div className="bg-slate-800/70 rounded-lg p-2 border border-slate-700/70">
                               <div className="text-slate-400">Active</div>

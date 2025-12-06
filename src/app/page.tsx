@@ -1,146 +1,166 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Button from "@/components/common/Button";
 import Link from "next/link";
 import Image from "next/image";
 import { SITE_CONFIG } from "@/lib/constants";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <div className="space-y-0 overflow-hidden">
-      {/* Hero Section - Minimalist & Modern */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-black opacity-80"></div>
+    <div className="min-h-screen bg-black">
+      {/* Hero Section - Ultra Modern */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Animated gradient mesh background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-950 to-black"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent"></div>
         
-        {/* Animated shapes in background */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
-        <div className="absolute top-1/2 right-1/3 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-4000"></div>
+        {/* Animated grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20"></div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <div className="relative w-32 h-32 group">
+        <div className={`relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          {/* Logo with glow effect */}
+          <div className="flex justify-center mb-12">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity duration-500"></div>
               <Image
                 src="/assets/images/logo-circular.png"
                 alt={SITE_CONFIG.name}
-                width={128}
-                height={128}
-                className="w-full h-full object-cover rounded-full shadow-2xl group-hover:scale-110 transition-transform duration-500"
+                width={120}
+                height={120}
+                className="relative rounded-full ring-2 ring-cyan-500/50 group-hover:ring-cyan-400 transition-all duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="space-y-6">
-            <h1 className="text-6xl md:text-7xl font-bold text-white leading-tight tracking-tight">
-              {SITE_CONFIG.name}
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-blue-200 font-light max-w-2xl mx-auto">
-              Level 20 Clash of Clans Clan • 114 War Wins • Based in {SITE_CONFIG.region}
-            </p>
+          {/* Main headline with gradient */}
+          <h1 className="text-6xl md:text-8xl font-black mb-6 bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent leading-tight">
+            {SITE_CONFIG.name}
+          </h1>
+          
+          {/* Subheadline */}
+          <p className="text-xl md:text-2xl text-slate-400 font-light mb-4 max-w-3xl mx-auto">
+            Elite Clash of Clans Community
+          </p>
+
+          {/* Stats bar */}
+          <div className="flex justify-center gap-8 mb-12 text-sm text-slate-500">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+              <span>Level 20</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+              <span>114 Wins</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+              <span>39 Members</span>
+            </div>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex gap-4 justify-center flex-wrap pt-8">
+          <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/join">
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className="bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
-              >
-                Apply
-              </Button>
+              <button className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(6,182,212,0.5)]">
+                <span className="relative z-10">Join the Clan</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
             </Link>
             <a href={SITE_CONFIG.social.discord} target="_blank" rel="noopener noreferrer">
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-2 border-white text-white hover:bg-white hover:text-purple-900 font-bold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
-              >
-                Join Discord
-              </Button>
+              <button className="group px-8 py-4 border border-slate-700 hover:border-cyan-500 rounded-xl font-semibold text-slate-300 hover:text-white transition-all duration-300 hover:bg-slate-900/50">
+                Discord
+              </button>
             </a>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
-          <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-slate-700 rounded-full flex justify-center pt-2">
+            <div className="w-1 h-2 bg-cyan-500 rounded-full"></div>
+          </div>
         </div>
       </section>
 
-      {/* Info Sections - Clean & Focused */}
-      <section className="bg-gradient-to-b from-black to-blue-950 py-20">
+      {/* Stats Section - Glassmorphism */}
+      <section className="relative py-24 bg-gradient-to-b from-black to-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Members Card */}
-            <Link href="/members" className="group">
-              <div className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 transition-all duration-300 group-hover:border-white/50 group-hover:scale-105">
-                <div className="text-5xl mb-4">👥</div>
-                <h3 className="text-2xl font-bold text-white mb-2">39 Members</h3>
-                <p className="text-blue-200">Competitive players from across Australia</p>
-              </div>
-            </Link>
-
-            {/* Wars Card */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8">
-              <div className="text-5xl mb-4">⚔️</div>
-              <h3 className="text-2xl font-bold text-white mb-2">114 War Wins</h3>
-              <p className="text-blue-200">Proven track record of success</p>
-            </div>
-
-            {/* Events Card */}
-            <Link href="/events" className="group">
-              <div className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 transition-all duration-300 group-hover:border-white/50 group-hover:scale-105">
-                <div className="text-5xl mb-4">📅</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Regular Events</h3>
-                <p className="text-blue-200">Wars, CWL, and challenges year-round</p>
-              </div>
-            </Link>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { icon: "👥", value: "39", label: "Active Members", link: "/members" },
+              { icon: "⚔️", value: "114", label: "War Victories", link: null },
+              { icon: "📅", value: "24/7", label: "Events Active", link: "/events" },
+            ].map((stat, i) => (
+              <Link key={i} href={stat.link || "#"} className={!stat.link ? "pointer-events-none" : ""}>
+                <div className={`group relative bg-gradient-to-br from-slate-900/50 to-slate-950/50 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-8 transition-all duration-500 ${stat.link ? 'hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] hover:-translate-y-1' : ''}`}>
+                  <div className="text-6xl mb-4 filter grayscale group-hover:grayscale-0 transition-all duration-500">{stat.icon}</div>
+                  <div className="text-5xl font-black text-white mb-2 bg-gradient-to-r from-white to-cyan-400 bg-clip-text text-transparent">{stat.value}</div>
+                  <div className="text-slate-400 font-medium">{stat.label}</div>
+                  {stat.link && (
+                    <div className="absolute top-4 right-4 text-slate-600 group-hover:text-cyan-500 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA - Sleek & Modern */}
-      <section className="relative bg-gradient-to-r from-blue-900 via-purple-900 to-black py-20 overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl"></div>
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
-            Ready to Clash?
-          </h2>
-          <p className="text-lg text-blue-200">
-            Join an elite Australian Clash of Clans community. Apply now and let's dominate together.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap pt-4">
-            <Link href="/join">
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className="bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-4 shadow-lg hover:shadow-xl transition-all"
-              >
-                Apply Now
-              </Button>
-            </Link>
-            <a href={SITE_CONFIG.social.discord} target="_blank" rel="noopener noreferrer">
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-2 border-white text-white hover:bg-white hover:text-purple-900 font-bold px-8 py-4 shadow-lg hover:shadow-xl transition-all"
-              >
-                Our Discord
-              </Button>
-            </a>
+      {/* Features Section - Horizontal cards */}
+      <section className="relative py-24 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">Why Join Us?</h2>
+            <p className="text-slate-400 text-lg">What makes Blue Team Clan stand out</p>
           </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: "🎯", title: "Competitive", desc: "Regular wars and CWL participation" },
+              { icon: "🤝", title: "Community", desc: "Active Discord and friendly members" },
+              { icon: "📈", title: "Growth", desc: "Help each other improve strategies" },
+              { icon: "🏆", title: "Rewards", desc: "Max clan games and raid rewards" },
+            ].map((feature, i) => (
+              <div key={i} className="group relative bg-slate-900/30 border border-slate-800 rounded-2xl p-6 hover:border-cyan-500/50 transition-all duration-500 hover:-translate-y-1">
+                <div className="text-5xl mb-4 filter grayscale group-hover:grayscale-0 transition-all duration-500">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                <p className="text-slate-400 text-sm">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA - Bold & Simple */}
+      <section className="relative py-32 bg-gradient-to-b from-slate-950 to-black overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent"></div>
+        
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
+            Ready to Dominate?
+          </h2>
+          <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto">
+            Join Australia's most active Clash of Clans clan and start winning today
+          </p>
+          <Link href="/join">
+            <button className="group relative px-12 py-5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-lg text-white overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_60px_rgba(6,182,212,0.6)]">
+              <span className="relative z-10">Apply Now</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
+          </Link>
         </div>
       </section>
     </div>

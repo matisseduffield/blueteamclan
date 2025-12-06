@@ -75,6 +75,23 @@ async function fetchClanWarLeague() {
   }
 }
 
+async function fetchLeagueWar(warTag: string) {
+  try {
+    const url = `https://api.clashofclans.com/v1/clanwarleagues/wars/${encodeURIComponent(warTag)}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${COC_API_KEY}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) return null;
+    return response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
 async function fetchCurrentWar() {
   try {
     const url = `https://api.clashofclans.com/v1/clans/%23${CLAN_TAG}/currentwar`;
@@ -223,6 +240,38 @@ async function generateClashCalendarEvents(): Promise<ClashEvent[]> {
   return events;
 }
 
+async function findCurrentCwlWar(leagueGroup: any) {
+  if (!leagueGroup?.rounds?.length) return null;
+
+  // Scan rounds from latest to earliest to find the first with valid war tags
+  for (let i = leagueGroup.rounds.length - 1; i >= 0; i--) {
+    const round = leagueGroup.rounds[i];
+    const validTags = round.warTags?.filter((t: string) => t && t !== "#0") || [];
+    if (!validTags.length) continue;
+
+    // Fetch wars in this round sequentially to avoid rate spikes
+    for (const warTag of validTags) {
+      const war = await fetchLeagueWar(warTag);
+      if (!war) continue;
+
+      const ourFullTag = `#${CLAN_TAG}`;
+      const isOurWar = war?.clan?.tag === ourFullTag || war?.opponent?.tag === ourFullTag;
+      if (!isOurWar) continue;
+
+      // Prefer active war states; otherwise return the first found
+      if (war.state === "inWar" || war.state === "preparation") {
+        return war;
+      }
+      if (!war.state || war.state === "warEnded") {
+        // keep looking for an active one, but fallback
+        return war;
+      }
+    }
+  }
+
+  return null;
+}
+
 async function syncClashCalendar() {
   console.log("🚀 Syncing Clash of Clans Calendar Events...\n");
 
@@ -282,37 +331,71 @@ async function syncClashCalendar() {
       });
     }
 
-    // Save current war data
+    // Resolve current war: regular war first, else CWL war
+    let activeWar = null;
     if (warData && warData.state === "inWar") {
-      console.log("⚔️  Clan War in progress!\n");
+      activeWar = {
+        source: "regular",
+        data: warData,
+      };
+    } else if (cwlData) {
+      const cwlWar = await findCurrentCwlWar(cwlData);
+      if (cwlWar) {
+        activeWar = {
+          source: "cwl",
+          data: cwlWar,
+        };
+      }
+    }
+
+    if (activeWar) {
+      const data = activeWar.data;
+      const ourFullTag = `#${CLAN_TAG}`;
+      const ourClan = data.clan.tag === ourFullTag ? data.clan : data.opponent;
+      const opponentClan = data.clan.tag === ourFullTag ? data.opponent : data.clan;
+      const startTime = data.startTime ? new Date(data.startTime) : data.startTime ? new Date(data.startTime * 1000) : null;
+      const endTime = data.endTime ? new Date(data.endTime) : data.endTime ? new Date(data.endTime * 1000) : null;
+      const teamSize = data.teamSize || data.clan?.members || null;
+      const maxStars = teamSize ? teamSize * 3 : null;
+
       const warInfo = {
         status: "active",
-        state: warData.state,
-        teamSize: warData.teamSize,
-        startTime: new Date(warData.startTime * 1000),
-        endTime: new Date(warData.endTime * 1000),
+        source: activeWar.source,
+        state: data.state,
+        teamSize,
+        maxStars,
+        startTime: startTime || null,
+        endTime: endTime || null,
         clan: {
-          name: warData.clan.name,
-          tag: warData.clan.tag,
-          clanLevel: warData.clan.clanLevel,
-          attacks: warData.clan.attacks,
-          stars: warData.clan.stars,
-          destruction: warData.clan.destructionPercentage,
+          name: ourClan.name,
+          tag: ourClan.tag,
+          clanLevel: ourClan.clanLevel,
+          attacks: ourClan.attacks,
+          stars: ourClan.stars,
+          destruction: ourClan.destructionPercentage,
         },
         opponent: {
-          name: warData.opponent.name,
-          tag: warData.opponent.tag,
-          clanLevel: warData.opponent.clanLevel,
-          attacks: warData.opponent.attacks,
-          stars: warData.opponent.stars,
-          destruction: warData.opponent.destructionPercentage,
+          name: opponentClan.name,
+          tag: opponentClan.tag,
+          clanLevel: opponentClan.clanLevel,
+          attacks: opponentClan.attacks,
+          stars: opponentClan.stars,
+          destruction: opponentClan.destructionPercentage,
         },
         lastUpdated: new Date(),
       };
+
       await setDoc(doc(db, "clashStatus", "currentWar"), warInfo);
+      console.log(`⚔️  War in progress (${activeWar.source})`);
       console.log(`   vs. ${warInfo.opponent.name}`);
       console.log(`   Score: ${warInfo.clan.stars} ⭐ vs ${warInfo.opponent.stars} ⭐`);
-      console.log(`   Destruction: ${warInfo.clan.destruction.toFixed(1)}% vs ${warInfo.opponent.destruction.toFixed(1)}%\n`);
+      console.log(
+        `   Destruction: ${
+          (warInfo.clan.destruction ?? 0).toFixed ? warInfo.clan.destruction.toFixed(1) : warInfo.clan.destruction
+        }% vs ${
+          (warInfo.opponent.destruction ?? 0).toFixed ? warInfo.opponent.destruction.toFixed(1) : warInfo.opponent.destruction
+        }%\n`
+      );
     } else {
       await setDoc(doc(db, "clashStatus", "currentWar"), {
         status: "inactive",

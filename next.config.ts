@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  reactStrictMode: true,
-  output: "export", // Static export for Cloudflare Pages
+  reactStrictMode: false, // Disabled to prevent double API calls in dev
+  // Removed output: "export" to enable API routes for War Tracker
   images: {
     unoptimized: true, // Important for Cloudflare Pages compatibility
   },
