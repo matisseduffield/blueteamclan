@@ -20,6 +20,20 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'CoC API Proxy' });
 });
 
+// Get outbound IP (for CoC API whitelisting)
+app.get('/myip', async (req, res) => {
+  try {
+    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const ipData = await ipResponse.json();
+    res.json({ 
+      outboundIP: ipData.ip,
+      message: 'Use this IP for your CoC API key whitelist'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get IP' });
+  }
+});
+
 // Proxy endpoint for CoC API
 app.get('/api/coc', async (req, res) => {
   const endpoint = req.query.endpoint;
