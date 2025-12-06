@@ -22,9 +22,9 @@ const formatDuration = (start: Date, end: Date) => {
   const days = Math.floor(totalSeconds / (3600 * 24));
   const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
 
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  // Omit seconds for a cleaner display
+  return `${days}d ${hours}h ${minutes}m`;
 };
 
 const getEventStatus = (eventName: string, now: Date) => {
@@ -793,36 +793,148 @@ export default function EventsPage() {
         )}
 
         {activeTab === 'events' && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Event Calendar</h1>
-                <p className="text-slate-400">Live countdowns for global Clash of Clans events (UTC).</p>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">Current UTC Time</div>
-                <div className="font-mono text-xl text-yellow-500">
-                  {now.toUTCString().slice(17, 25)}
-                </div>
-              </div>
-            </div>
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-8">
+            {(() => {
+              const events = [
+                { title: 'Raid Weekend', icon: Swords, colorClass: 'bg-red-500' },
+                { title: 'Trader Refresh', icon: Gift, colorClass: 'bg-blue-500' },
+                { title: 'CWL', icon: Award, colorClass: 'bg-yellow-500' },
+                { title: 'Clan Games', icon: Layout, colorClass: 'bg-emerald-500' },
+                { title: 'League Reset', icon: Calendar, colorClass: 'bg-indigo-500' },
+                { title: 'Season End', icon: Calendar, colorClass: 'bg-green-500' },
+              ];
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <EventCard title="Raid Weekend" icon={Swords} colorClass="bg-red-500" now={now} />
-              <EventCard title="Trader Refresh" icon={Gift} colorClass="bg-blue-500" now={now} />
-              <EventCard title="CWL" icon={Award} colorClass="bg-yellow-500" now={now} />
-              <EventCard title="Clan Games" icon={Layout} colorClass="bg-purple-500" now={now} />
-              <EventCard title="League Reset" icon={Calendar} colorClass="bg-indigo-500" now={now} />
-              <EventCard title="Season End" icon={Calendar} colorClass="bg-green-500" now={now} />
-            </div>
+              const withStatus = events.map(ev => {
+                const status = getEventStatus(ev.title, now);
+                return { ...ev, ...status };
+              });
 
-            <div className="mt-8 p-4 bg-blue-900/20 border border-blue-800/50 rounded-xl flex gap-3 text-sm text-blue-200">
-              <Globe className="shrink-0 text-blue-400" size={20} />
-              <p>
-                All events are synchronized with the official Supercell server time (UTC). 
-                Adjustments for your local timezone happen automatically via the countdown timer.
-              </p>
-            </div>
+              const activeEvents = withStatus.filter(e => e.state === 'active');
+              const upcomingEvents = withStatus
+                .filter(e => e.state === 'upcoming')
+                .sort((a, b) => a.targetDate.getTime() - b.targetDate.getTime());
+              const nextEvent = upcomingEvents[0];
+
+              const formatUTC = (d: Date) => d.toUTCString().replace('GMT', 'UTC');
+
+              return (
+                <>
+                  {/* Hero / Control Center */}
+                  <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/70 to-black shadow-2xl p-6 md:p-8">
+                    <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.25),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.25),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(16,185,129,0.25),transparent_40%)]" />
+                    <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                      <div className="space-y-3 max-w-xl">
+                        <div className="inline-flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-full px-3 py-1 text-xs uppercase tracking-widest text-slate-300">
+                          <Clock size={14} className="text-yellow-400" />
+                          Live Global Events (UTC)
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">Events Command Center</h1>
+                        <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                          Track every live and upcoming Clash of Clans beat—CWL windows, Raid Weekends, Games, and resets—updated in real time.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {activeEvents.length > 0 ? (
+                            activeEvents.map(ev => (
+                              <span key={ev.title} className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/40 text-green-200 text-xs font-semibold">
+                                <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                                {ev.title} Active — ends in {formatDuration(now, ev.targetDate)}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">
+                              No events active right now
+                            </span>
+                          )}
+                        </div>
+                        {nextEvent && (
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+                            <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2">
+                              <Calendar size={16} className="text-cyan-300" />
+                              <span className="font-semibold">Next Up: {nextEvent.title}</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2">
+                              <Clock size={16} className="text-yellow-300" />
+                              <span className="font-mono text-yellow-200">{formatDuration(now, nextEvent.targetDate)}</span>
+                            </div>
+                            <div className="text-slate-400">{formatUTC(nextEvent.targetDate)}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="w-full lg:w-auto">
+                        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-lg min-w-[260px]">
+                          <div className="flex items-center justify-between text-slate-400 text-xs uppercase tracking-widest">
+                            <span>Current UTC</span>
+                            <Clock size={14} className="text-yellow-400" />
+                          </div>
+                          <div className="font-mono text-3xl text-yellow-400 tracking-tight">
+                            {now.toUTCString().slice(17, 25)}
+                          </div>
+                          <div className="text-xs text-slate-500">{now.toUTCString().replace('GMT', 'UTC')}</div>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                            <div className="bg-slate-800/70 rounded-lg p-2 border border-slate-700/70">
+                              <div className="text-slate-400">Active</div>
+                              <div className="text-lg font-bold text-green-300">{activeEvents.length}</div>
+                            </div>
+                            <div className="bg-slate-800/70 rounded-lg p-2 border border-slate-700/70">
+                              <div className="text-slate-400">Upcoming</div>
+                              <div className="text-lg font-bold text-cyan-300">{upcomingEvents.length}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timeline / Notes */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2 text-slate-300 font-semibold">
+                        <Clock size={16} className="text-cyan-300" />
+                        Upcoming Timeline (UTC)
+                      </div>
+                      <div className="space-y-3">
+                        {upcomingEvents.length === 0 && (
+                          <div className="text-slate-500 text-sm">No upcoming events detected.</div>
+                        )}
+                        {upcomingEvents.map(ev => (
+                          <div key={ev.title} className="flex items-center justify-between bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`h-10 w-10 rounded-lg flex items-center justify-center text-white ${ev.colorClass} bg-opacity-70`}> 
+                                <ev.icon size={18} />
+                              </div>
+                              <div>
+                                <div className="text-white font-semibold">{ev.title}</div>
+                                <div className="text-xs text-slate-400">{formatUTC(ev.targetDate)}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-yellow-300 font-mono text-sm">{formatDuration(now, ev.targetDate)}</div>
+                              <div className="text-xs text-slate-500">Starts in</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-900/10 border border-blue-800/40 rounded-2xl p-5 text-sm text-blue-100 space-y-3">
+                      <div className="flex items-center gap-2 font-semibold text-white">
+                        <Globe size={16} className="text-blue-300" />
+                        UTC Synced & Tie-breaks
+                      </div>
+                      <p className="text-blue-100/80 leading-relaxed">
+                        All timers are aligned to Supercell server time (UTC). Use the countdowns to plan war hits, Clan Games points, and capital raids with precision.
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 text-blue-100/70">
+                        <li>Active events update live; no refresh needed.</li>
+                        <li>Upcoming events sorted by soonest start.</li>
+                        <li>Current time panel mirrors server UTC.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
