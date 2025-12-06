@@ -192,7 +192,7 @@ const WarTracker = () => {
   const [groupData, setGroupData] = useState<any>(null);
 
   const clanTag = "#2Q98GJ0J2";
-  const apiBase = process.env.NEXT_PUBLIC_COC_PROXY_URL || '/api/coc';
+  const apiBase = process.env.NEXT_PUBLIC_COC_PROXY_URL || 'https://blueteamclan-production.up.railway.app/api/coc';
 
   const addLog = (message: string) => {
     setLogs(prev => [...prev, { time: new Date().toLocaleTimeString(), msg: message }]);
