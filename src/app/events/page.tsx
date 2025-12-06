@@ -857,7 +857,7 @@ export default function EventsPage() {
                               <span className="font-mono text-yellow-200">{formatDuration(now, nextEvent.targetDate)}</span>
                             </div>
                             <div className="text-slate-400">{formatUTC(nextEvent.targetDate)}</div>
-                            <div className="text-slate-400">Local: {nextEvent.targetDate.toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}</div>
+                            <div className="text-slate-400">{nextEvent.targetDate.toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}</div>
                           </div>
                         )}
                       </div>
