@@ -492,7 +492,7 @@ const WarTracker = () => {
       {status === 'nowar' && (
         <div className="bg-slate-800 rounded-xl p-8 border border-slate-700 shadow-xl text-center">
           <div className="text-6xl mb-4">😴</div>
-          <h2 className="text-2xl font-bold text-white mb-2">No Active War</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">No Active War [V2-DEPLOYED]</h2>
           <p className="text-slate-400">The clan is not currently in a CWL war.</p>
         </div>
       )}
