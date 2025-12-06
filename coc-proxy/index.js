@@ -21,7 +21,8 @@ app.get('/', (req, res) => {
 });
 
 // Get outbound IP (for CoC API whitelisting)
-app.get('/myip', async (req, res) => {
+// Get outbound IP (for CoC API whitelisting) at /api/coc/myip
+app.get('/api/coc/myip', async (req, res) => {
   try {
     const ipResponse = await fetch('https://api.ipify.org?format=json');
     const ipData = await ipResponse.json();
