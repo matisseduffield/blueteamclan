@@ -213,11 +213,13 @@ const WarTracker = () => {
     try {
       addLog("Step 1: Fetching League Group...");
       const groupUrl = `${apiBase}?endpoint=/clans/${formatTag(clanTag)}/currentwar/leaguegroup`;
+      addLog(`League Group Request URL: ${groupUrl}`);
       const groupRes = await fetch(groupUrl);
       const groupRaw = await groupRes.text();
       addLog(`League Group Raw Response: ${groupRaw}`);
       if (!groupRes.ok) {
         addLog(`League group fetch failed: ${groupRes.status} ${groupRes.statusText}`);
+        addLog(`League group error response body: ${groupRaw}`);
         if (groupRes.status === 404) {
           addLog("Clan is not currently in a Clan War League.");
           setStatus('nowar');
@@ -273,11 +275,14 @@ const WarTracker = () => {
           if (warTag === "#0") continue;
           
           try {
-            const warRes = await fetch(`${apiBase}?endpoint=/clanwarleagues/wars/${formatTag(warTag)}`);
+            const warUrl = `${apiBase}?endpoint=/clanwarleagues/wars/${formatTag(warTag)}`;
+            addLog(`War Request URL for ${warTag}: ${warUrl}`);
+            const warRes = await fetch(warUrl);
             const warRaw = await warRes.text();
             addLog(`War Raw Response for ${warTag}: ${warRaw}`);
             if (!warRes.ok) {
               addLog(`War fetch failed ${warTag}: ${warRes.status}`);
+              addLog(`War error response body for ${warTag}: ${warRaw}`);
               continue;
             }
             let warData;
