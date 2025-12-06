@@ -1,0 +1,18 @@
+{
+  "name": "coc-api-proxy",
+  "version": "1.0.0",
+  "description": "Proxy server for Clash of Clans API with static IP",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
