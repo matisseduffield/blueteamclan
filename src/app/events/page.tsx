@@ -207,8 +207,8 @@ const WarTracker = () => {
     setCWLStandings([]);
     setErrorMessage("");
 
-    addLog(`Starting fetch for Clan Tag: ${clanTag}`);
-    addLog(`Using API base: ${apiBase}`);
+    addLog(`[DEBUG-V2] Starting fetch for Clan Tag: ${clanTag}`);
+    addLog(`[DEBUG-V2] Using API base: ${apiBase}`);
 
     try {
       addLog("Step 1: Fetching League Group...");
