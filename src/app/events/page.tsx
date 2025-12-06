@@ -213,9 +213,9 @@ const WarTracker = () => {
     try {
       addLog("Step 1: Fetching League Group...");
       const groupUrl = `${apiBase}?endpoint=/clans/${formatTag(clanTag)}/currentwar/leaguegroup`;
-      
       const groupRes = await fetch(groupUrl);
-
+      const groupRaw = await groupRes.text();
+      addLog(`League Group Raw Response: ${groupRaw}`);
       if (!groupRes.ok) {
         addLog(`League group fetch failed: ${groupRes.status} ${groupRes.statusText}`);
         if (groupRes.status === 404) {
@@ -226,11 +226,15 @@ const WarTracker = () => {
         if (groupRes.status === 403) throw new Error("Access Denied (403). IP Restricted or Invalid API Key.");
         throw new Error(`API Error: ${groupRes.status} ${groupRes.statusText}`);
       }
-
-      const groupData = await groupRes.json();
+      let groupData;
+      try {
+        groupData = JSON.parse(groupRaw);
+      } catch (e) {
+        addLog('Error parsing league group response as JSON.');
+        setStatus('error');
+        return;
+      }
       const season = groupData.season;
-      
-      // Store for later use in rendering
       setGroupData(groupData);
       
       // Step 2: Calculate cumulative standings from all rounds
@@ -270,18 +274,22 @@ const WarTracker = () => {
           
           try {
             const warRes = await fetch(`${apiBase}?endpoint=/clanwarleagues/wars/${formatTag(warTag)}`);
+            const warRaw = await warRes.text();
+            addLog(`War Raw Response for ${warTag}: ${warRaw}`);
             if (!warRes.ok) {
               addLog(`War fetch failed ${warTag}: ${warRes.status}`);
               continue;
             }
-            
-            const warData = await warRes.json();
+            let warData;
+            try {
+              warData = JSON.parse(warRaw);
+            } catch (e) {
+              addLog(`Error parsing war response for ${warTag} as JSON.`);
+              continue;
+            }
             allWars.push(warData);
-            
-            // Log war data for debugging
             addLog(`War: ${warData.clan.name} (${warData.clan.stars}⭐) vs ${warData.opponent.name} (${warData.opponent.stars}⭐)`);
           } catch (e) {
-            // Log error but continue
             addLog(`Error fetching war ${warTag}: ${e}`);
           }
         }
