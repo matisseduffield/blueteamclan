@@ -16,7 +16,7 @@ const useCurrentTime = () => {
 };
 
 const formatDuration = (start: Date, end: Date) => {
-          const warRes = await fetch(`${apiBase}?endpoint=/clanwarleagues/wars/${formatTag(tag)}`);
+  const totalSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
   if (totalSeconds < 0) return "Processing...";
   
   const days = Math.floor(totalSeconds / (3600 * 24));
