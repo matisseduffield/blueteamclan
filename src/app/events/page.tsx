@@ -220,6 +220,11 @@ const WarTracker = () => {
       if (!groupRes.ok) {
         addLog(`League group fetch failed: ${groupRes.status} ${groupRes.statusText}`);
         addLog(`League group error response body: ${groupRaw}`);
+        // Always log diagnostics before returning
+        addLog(`apiBase: ${apiBase}`);
+        addLog(`Request URL: ${groupUrl}`);
+        addLog(`Response Status: ${groupRes.status}`);
+        addLog(`Response Body: ${groupRaw}`);
         if (groupRes.status === 404) {
           addLog("Clan is not currently in a Clan War League.");
           setStatus('nowar');
