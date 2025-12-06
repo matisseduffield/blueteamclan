@@ -871,6 +871,7 @@ export default function EventsPage() {
                             {now.toUTCString().slice(17, 25)}
                           </div>
                           <div className="text-xs text-slate-500">{now.toUTCString().replace('GMT', 'UTC')}</div>
+                          <div className="text-xs text-slate-400">Local: {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                           <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
                             <div className="bg-slate-800/70 rounded-lg p-2 border border-slate-700/70">
                               <div className="text-slate-400">Active</div>
